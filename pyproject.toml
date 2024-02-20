@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zhipuai"
-version = "2.0.1-pydantic-v1"
+version = "v2.0.1+pydantic-v1"
 description = "dowgrade v1 for langchain"
 authors = ["arcstep <43801@qq.com>"]
 readme = "README.md"
