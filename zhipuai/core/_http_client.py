@@ -209,7 +209,7 @@ class HttpClient:
 
         try:
             if inspect.isclass(cast_type) and issubclass(cast_type, pydantic.BaseModel):
-                return cast(ResponseT, cast_type.model_validate(data))
+                return cast(ResponseT, cast_type.parse_obj(data))
 
             return cast(ResponseT, pydantic.TypeAdapter(cast_type).validate_python(data))
         except pydantic.ValidationError as err:

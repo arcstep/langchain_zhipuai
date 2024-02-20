@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "zhipuai-sdk-python-v4"
+version = "2.0.1"
+description = ""
+authors = ["arcstep <43801@qq.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+httpx ="^0.23.0"
+pydantic = "1.10.13"
+cachetools = "4.2.2"
+pyjwt = "^2.8.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.1"
+ipykernel = "^6.29.2"
+python-dotenv = "^1.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

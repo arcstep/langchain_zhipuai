@@ -1,10 +1,3 @@
-**降级处理说明**
-
-由于 langchain 和 langserve 要求使用 pydantic_v1，否则存在很多兼容性问题，
-因此特意克隆了此项目，并做出少许修改，以便将 pydantic 从 v2 降级到 v1 。
-
-该项目修改的意义仅在于 langchain 兼容，因此并未提交到 pypi ，而仅用于 langchain_chinese 包的引用（langchain_chinese 对其进一步包装为 langchain 中开箱即用的工具）。
-
 # 智谱大模型开放接口SDK
 
 [![PyPI version](https://img.shields.io/pypi/v/zhipuai.svg)](https://pypi.org/project/zhipuai/)

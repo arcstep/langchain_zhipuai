@@ -15,3 +15,5 @@ eggs/
 *.egg-info/
 test/
 examples/
+
+.env

@@ -20,7 +20,6 @@ class UserRequestInput(TypedDict, total=False):
     headers: Headers
     params: Query | None
 
-
 @final
 class ClientRequestParam(pydantic.BaseModel):
     method: str
@@ -32,6 +31,9 @@ class ClientRequestParam(pydantic.BaseModel):
     files: Union[HttpxRequestFiles, None] = None
     params: Query = {}
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def get_max_retries(self, max_retries) -> int:
         if isinstance(self.max_retries, NotGiven):
@@ -47,7 +49,5 @@ class ClientRequestParam(pydantic.BaseModel):
         kwargs: dict[str, Any] = {
             key: remove_notgiven_indict(value) for key, value in values.items()
         }
-        return cast(ClientRequestParam, super().model_construct(_fields_set, **kwargs))
-
-    model_construct = construct
+        return cast(ClientRequestParam, super().construct(**kwargs))
 
