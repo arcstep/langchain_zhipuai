@@ -1,7 +1,7 @@
 from typing import List, Union, Optional
 from typing_extensions import Literal
 
-from pydantic import BaseModel
+from pydantic_v1 import BaseModel
 
 __all__ = ["FineTuningJobEvent", "Metric", "JobEvent"]
 
