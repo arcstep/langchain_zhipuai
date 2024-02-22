@@ -1,6 +1,5 @@
-**!!! 这是对智谱AI官方SDK的langchain适配 !!!**
-
 # 为什么要开发这个包？
+[![PyPI version](https://img.shields.io/pypi/v/zhipuai_pydantic_v1.svg)](https://pypi.org/project/zhipuai_pydantic_v1/)
 
 为了在 langchain 中可以方便使用，做了如下额外工作：
 
