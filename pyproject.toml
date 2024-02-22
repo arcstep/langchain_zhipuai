@@ -1,7 +1,8 @@
 [tool.poetry]
 name = "langchain_zhipu"
-version = "4.0.4"
-description = "Prepare ZhiPu APIs for LangChain"
+version = "4.0.5"
+description = "将智谱AI集成到LangChain"
+license = "MIT"
 authors = ["arcstep <43801@qq.com>"]
 homepage = "https://github.com/arcstep/langchain_zhipuai"
 repository = "https://github.com/arcstep/langchain_zhipuai.git"
