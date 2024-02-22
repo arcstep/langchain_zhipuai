@@ -24,6 +24,24 @@
 - 逻辑推理和对话生成
 - 支持工具回调
 
+## 使用举例
+
+```python
+from zhipuai_pydantic_v1 import ChatZhipuAI
+llm = ChatZhipuAI()
+
+# invoke
+llm.invoke("hi")
+
+# stream
+for s in llm.stream("hi"):
+  print(s)
+
+# astream
+async for s in llm.astream("hi"):
+  print(s)
+```
+
 ------------------------------------------
 **以下是 zhipuai v2.0.1 的原有文档**
 [![PyPI version](https://img.shields.io/pypi/v/zhipuai.svg)](https://pypi.org/project/zhipuai/)
