@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zhipuai_pydantic_v1"
-version = "4.0.3"
+version = "4.0.4"
 description = "downgrade zhipu api to pydantic v1 and prepare for langchain"
 authors = ["arcstep <43801@qq.com>"]
 homepage = "https://github.com/arcstep/zhipuai-sdk-python-v4"
