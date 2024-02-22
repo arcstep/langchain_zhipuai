@@ -4,7 +4,7 @@ from typing import Union, Any, cast
 
 import pydantic.generics
 from httpx import Timeout
-from zhipuai_pydantic_v1.pydantic_v1 import ConfigDict
+from langchain_core.pydantic_v1 import ConfigDict
 from typing_extensions import (
     final, Unpack, ClassVar, TypedDict
 
