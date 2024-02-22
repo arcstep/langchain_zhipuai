@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "zhipuai_pydantic_v1"
+name = "langchain_zhipuai"
 version = "4.0.4"
-description = "downgrade zhipu api to pydantic v1 and prepare for langchain"
+description = "prepare zhipu api for langchain"
 authors = ["arcstep <43801@qq.com>"]
-homepage = "https://github.com/arcstep/zhipuai-sdk-python-v4"
-repository = "https://github.com/arcstep/zhipuai-sdk-python-v4.git"
+homepage = "https://github.com/arcstep/langchain_zhipuai"
+repository = "https://github.com/arcstep/langchain_zhipuai.git"
 readme = "README.md"
 
 [tool.poetry.dependencies]
