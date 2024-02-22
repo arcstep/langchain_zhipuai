@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "langchain_zhipuai"
+name = "langchain_zhipu"
 version = "4.0.4"
-description = "prepare zhipu api for langchain"
+description = "Prepare ZhiPu APIs for LangChain"
 authors = ["arcstep <43801@qq.com>"]
 homepage = "https://github.com/arcstep/langchain_zhipuai"
 repository = "https://github.com/arcstep/langchain_zhipuai.git"
