@@ -1,5 +1,5 @@
 # 为什么要开发这个包？
-[![PyPI version](https://img.shields.io/pypi/v/langchain_zhipuai.svg)](https://pypi.org/project/langchain_zhipuai/)
+[![PyPI version](https://img.shields.io/pypi/v/langchain_zhipu.svg)](https://pypi.org/project/langchain_zhipu/)
 
 为了方便在 langchain 中使用，在官方SDK基础上做了如下额外工作：
 
