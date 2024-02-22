@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zhipuai_pydantic_v1"
-version = "2.0.2"
-description = "dowgrade v1 for langchain (zhipu is an SDK library for accessing big model apis from ZhipuAI)"
+version = "2.0.3"
+description = "downgrade v1 for langchain (zhipu is an SDK library for accessing big model apis from ZhipuAI)"
 authors = ["arcstep <43801@qq.com>"]
 readme = "README.md"
 
