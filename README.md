@@ -4,7 +4,7 @@
 为了在 langchain 中可以方便使用，做了如下额外工作：
 
 - 问题1: 智谱AI的官方包使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
-- 问题2: langchain_community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
+- 问题2: langchain.community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
 
 ## 已支持全部 langchain 接口
 
