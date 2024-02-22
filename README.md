@@ -7,7 +7,22 @@
 - 问题1: 智谱AI的官方包使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
 - 问题2: langchain_community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
 
-该项目修改的意义仅在于 langchain 兼容，仅用于 langchain_chinese 包的引用（langchain_chinese 对其进一步包装为 langchain 中开箱即用的工具）。
+## 已支持全部 langchain 接口
+
+1. invoke
+2. ainvoke
+3. batch
+4. abatch
+5. stream
+6. astream
+7. astream_events
+8. asteram_log
+
+## 已支持模型能力
+
+- 模型名称："glm-3-turbo", "glm-4"
+- 逻辑推理和对话生成
+- 支持工具回调
 
 ------------------------------------------
 **以下是 zhipuai v2.0.1 的原有文档**
