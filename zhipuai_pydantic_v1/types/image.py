@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, List
 
-from pydantic_v1 import BaseModel
+from zhipuai_pydantic_v1.pydantic_v1 import BaseModel
 
 __all__ = ["GeneratedImage", "ImagesResponded"]
 
