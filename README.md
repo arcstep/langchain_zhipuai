@@ -1,18 +1,21 @@
-**!!! 非智谱AI的官方SDK，仅用于langchain兼容问题而临时使用 !!!**
+**!!! 这是对智谱AI官方SDK的langchain适配 !!!**
 
-# pydantic 降级处理说明
+# 为什么要开发这个包？
 
-由于 langchain 和 langserve 要求使用 pydantic_v1，否则存在很多兼容性问题，
-因此特意克隆了此项目，并做出少许修改，以便将 pydantic 从 v2 降级到 v1 。
+为了在 langchain 中可以方便使用，做了如下额外工作：
+
+- 问题1: 智谱AI的官方包使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
+- 问题2: langchain_community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
 
 该项目修改的意义仅在于 langchain 兼容，仅用于 langchain_chinese 包的引用（langchain_chinese 对其进一步包装为 langchain 中开箱即用的工具）。
 
-# 智谱大模型开放接口SDK
-
+------------------------------------------
+**以下是 zhipuai v2.0.1 的原有文档**
 [![PyPI version](https://img.shields.io/pypi/v/zhipuai.svg)](https://pypi.org/project/zhipuai/)
 
 智谱[开放平台](https://open.bigmodel.cn/dev/api)大模型接口 Python SDK（Big Model API SDK in Python），让开发者更便捷的调用智谱开放API
 
+# 智谱大模型开放接口SDK
 
 ## 简介
 - 对所有接口进行了类型封装。
