@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain_zhipu"
-version = "4.0.7"
+version = "4.0.9"
 description = "将智谱AI集成到LangChain"
 license = "MIT"
 authors = ["arcstep <43801@qq.com>"]
@@ -11,11 +11,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 httpx ="^0.23.0"
-pydantic = "1.10.13"
+pydantic = ">=1,<3"
 cachetools = "4.2.2"
 pyjwt = "^2.8.0"
 langchain = "^0.1.0"
-langchain-core = "^0.1.26"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.1"

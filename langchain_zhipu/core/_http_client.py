@@ -11,7 +11,6 @@ from typing import (
 )
 
 import httpx
-from pydantic import TypeAdapter
 from langchain_core.pydantic_v1 import BaseModel, ValidationError
 from httpx import URL, Timeout
 
@@ -211,8 +210,6 @@ class HttpClient:
         try:
             if inspect.isclass(cast_type) and issubclass(cast_type, BaseModel):
                 return cast(ResponseT, cast_type.parse_obj(data))
-
-            return cast(ResponseT, TypeAdapter(cast_type).validate_python(data))
         except ValidationError as err:
             raise APIResponseValidationError(response=response, json_data=data) from err
 
