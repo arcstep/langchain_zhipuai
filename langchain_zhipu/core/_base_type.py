@@ -9,7 +9,7 @@ from typing import (
     TypeVar, IO, Tuple, Sequence, Any, List,
 )
 
-import pydantic
+import langchain_core.pydantic_v1
 from typing_extensions import (
     Literal,
     override,
@@ -21,7 +21,7 @@ Body = object
 AnyMapping = Mapping[str, object]
 PrimitiveData = Union[str, int, float, bool, None]
 Data = Union[PrimitiveData, List[Any], Tuple[Any], "Mapping[str, Any]"]
-ModelT = TypeVar("ModelT", bound=pydantic.BaseModel)
+ModelT = TypeVar("ModelT", bound=langchain_core.pydantic_v1.BaseModel)
 _T = TypeVar("_T")
 
 if TYPE_CHECKING:

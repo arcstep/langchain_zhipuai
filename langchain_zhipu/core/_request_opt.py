@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from typing import Union, Any, cast
 
-import pydantic.generics
+try:
+    import pydantic.v1.generics # noqa: F403 # type: ignore
+except ImportError:
+    import pydantic.generics  # noqa: F403 # type: ignore
 from httpx import Timeout
-from langchain_core.pydantic_v1 import ConfigDict
+from langchain_core.pydantic_v1 import ConfigDict, BaseModel
 from typing_extensions import (
     final, Unpack, ClassVar, TypedDict
 
@@ -21,7 +24,7 @@ class UserRequestInput(TypedDict, total=False):
     params: Query | None
 
 @final
-class ClientRequestParam(pydantic.BaseModel):
+class ClientRequestParam(BaseModel):
     method: str
     url: str
     max_retries: Union[int, NotGiven] = NotGiven()
@@ -30,7 +33,7 @@ class ClientRequestParam(pydantic.BaseModel):
     json_data: Union[Body, None] = None
     files: Union[HttpxRequestFiles, None] = None
     params: Query = {}
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+    # model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     class Config:
         arbitrary_types_allowed = True
