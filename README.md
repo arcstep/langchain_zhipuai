@@ -19,11 +19,11 @@
 
 ## 已支持模型能力
 
-- 模型名称："glm-3-turbo", "glm-4"
+- 模型名称："glm-3-turbo", "glm-4", "glm-4v"
 - 逻辑推理和对话生成
 - 支持工具回调
 
-## 使用举例
+## 简单的例子
 
 ```python
 from zhipuai_pydantic_v1 import ChatZhipuAI
@@ -39,6 +39,32 @@ for s in llm.stream("hi"):
 # astream
 async for s in llm.astream("hi"):
   print(s)
+```
+
+## 使用glm-4v
+
+```python
+from langchain_zhipu import ChatZhipuAI
+from langchain_core.prompts import ChatPromptTemplate
+
+llm4v = ChatZhipuAI(model="glm-4v")
+
+prompt = ChatPromptTemplate.from_messages([
+    ("human", [
+          {
+            "type": "text",
+            "text": "图里有什么"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+                "url" : "https://img1.baidu.com/it/u=1369931113,3388870256&fm=253&app=138&size=w931&n=0&f=JPEG&fmt=auto?sec=1703696400&t=f3028c7a1dca43a080aeb8239f09cc2f"
+            }
+          }
+        ]),
+])
+
+(prompt|llm4v).invoke({})
 ```
 
 ------------------------------------------
