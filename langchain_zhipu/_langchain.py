@@ -216,13 +216,12 @@ class ChatZhipuAI(BaseChatModel):
     @classmethod
     def valid_params(cls):
         """
-        ZhipuAI只接受这些参数。另外，stream参数根据使用invoke方法还是stream方法来设定，而不是在对象构建时提供。
+        ZhipuAI在调用时只接受这些参数。
         """
         return [
             "model",
             "request_id",
             "do_sample",
-            "api_key",
             "temperature",
             "top_p",
             "max_tokens",
