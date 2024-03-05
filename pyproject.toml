@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain_zhipu"
-version = "4.0.10"
+version = "4.0.11"
 description = "将智谱AI集成到LangChain"
 license = "MIT"
 authors = ["arcstep <43801@qq.com>"]
@@ -24,6 +24,7 @@ langchain-experimental = "^0.0.52"
 pandas = "^2.2.0"
 tabulate = "^0.9.0"
 langchain-openai = "^0.0.6"
+dashscope = "^1.14.1"
 
 [build-system]
 requires = ["poetry-core"]

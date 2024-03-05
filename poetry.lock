@@ -416,6 +416,23 @@ traitlets = ">=4"
 test = ["pytest"]
 
 [[package]]
+name = "dashscope"
+version = "1.14.1"
+description = "dashscope client sdk library"
+optional = false
+python-versions = ">=3.7.0"
+files = [
+    {file = "dashscope-1.14.1-py3-none-any.whl", hash = "sha256:8debc8d36de572a3a264c870b79026fa89507a65ca494120957649281fa23455"},
+]
+
+[package.dependencies]
+aiohttp = "*"
+requests = "*"
+
+[package.extras]
+tokenizer = ["tiktoken"]
+
+[[package]]
 name = "dataclasses-json"
 version = "0.6.4"
 description = "Easily serialize dataclasses to and from JSON."
@@ -2556,4 +2573,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "82d4bfcf9143b3ef1d9d7c2f76c5dbd9ba615e23f8dd6fdcdd4c9fc6169a2d22"
+content-hash = "ee0ae69c915af9b10490973010be1672a20a73c34fb61138613d4abccc0459c4"
