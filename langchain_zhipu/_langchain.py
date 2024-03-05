@@ -48,8 +48,6 @@ def _convert_dict_to_message(_dict: Mapping[str, Any]) -> BaseMessage:
     if role == "user":
         return HumanMessage(content=_dict.get("content", ""))
     elif role == "assistant":
-        # Fix for azure
-        # Also OpenAI returns None for tool invocations
         content = _dict.get("content", "") or ""
         additional_kwargs: Dict = {}
         if tool_calls := _dict.get("tool_calls"):
@@ -214,7 +212,7 @@ class ChatZhipuAI(BaseChatModel):
     """
 
     @classmethod
-    def valid_params(cls):
+    def filter_model_kwargs(cls):
         """
         ZhipuAI在调用时只接受这些参数。
         """
@@ -234,22 +232,16 @@ class ChatZhipuAI(BaseChatModel):
     def get_model_kwargs(self):
         params = {}
         for attr, value in self.__dict__.items():
-            if attr in self.__class__.valid_params() and value is not None:
+            if attr in self.__class__.filter_model_kwargs() and value is not None:
                 params[attr] = value
         return params
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
-        try:
-            if values["api_key"] is not None:
-                values["client"] =  ZhipuAI(api_key=values["api_key"])
-            else:
-                values["client"] =  ZhipuAI()
-        except ImportError:
-            raise RuntimeError(
-                "Could not import zhipuai package. "
-                "Please install it via 'pip install -U zhipuai'"
-            )
+        if values["api_key"] is not None:
+            values["client"] =  ZhipuAI(api_key=values["api_key"])
+        else:
+            values["client"] =  ZhipuAI()
         return values
 
     # 实现 invoke 调用方法
@@ -271,6 +263,7 @@ class ChatZhipuAI(BaseChatModel):
         if stop is not None:
             params.update({"stop": stop})
     
+        # 调用模型
         response = self.client.chat.completions.create(
             messages=prompt,
             **params
@@ -315,18 +308,18 @@ class ChatZhipuAI(BaseChatModel):
         if stop is not None:
             params.update({"stop": stop})
     
-        response = self.client.chat.completions.create(
+        responses = self.client.chat.completions.create(
             messages=prompt,
             **params
         )
 
         default_chunk_class = AIMessageChunk
-        for chunk in response:
-            if not isinstance(chunk, dict):
-                chunk = chunk.dict()
-            if len(chunk["choices"]) == 0:
+        for response in responses:                
+            if not isinstance(response, dict):
+                response = response.dict()
+            if len(response["choices"]) == 0:
                 continue
-            choice = chunk["choices"][0]
+            choice = response["choices"][0]
             chunk = _convert_delta_to_message_chunk(
                 choice["delta"], default_chunk_class
             )
@@ -369,15 +362,15 @@ class ChatZhipuAI(BaseChatModel):
 
         # 由于ZhipuAI没有基于流的异步返回，因此使用asyncio构建
         loop = asyncio.get_running_loop()
-        response = await loop.run_in_executor(None, create_completions)
+        responses = await loop.run_in_executor(None, create_completions)
 
         default_chunk_class = AIMessageChunk
-        for chunk in response:
-            if not isinstance(chunk, dict):
-                chunk = chunk.dict()
-            if len(chunk["choices"]) == 0:
+        for response in responses:
+            if not isinstance(response, dict):
+                response = response.dict()
+            if len(response["choices"]) == 0:
                 continue
-            choice = chunk["choices"][0]
+            choice = response["choices"][0]
             chunk = _convert_delta_to_message_chunk(
                 choice["delta"], default_chunk_class
             )
