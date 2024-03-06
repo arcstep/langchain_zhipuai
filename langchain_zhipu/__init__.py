@@ -1,6 +1,7 @@
 
 from ._client import ZhipuAI
-from ._langchain import ChatZhipuAI
+from .chat import ChatZhipuAI
+from .embeddings import ZhipuAIEmbeddings
 
 from .core._errors import (
     ZhipuAIError,

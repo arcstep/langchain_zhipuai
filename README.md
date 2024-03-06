@@ -19,7 +19,8 @@
 
 ## 已支持模型能力
 
-- 模型名称："glm-3-turbo", "glm-4", "glm-4v"
+- 已支持生成模型："glm-3-turbo", "glm-4", "glm-4v"
+- 已支持向量模型："embedding-2"
 - 逻辑推理和对话生成
 - 支持工具回调
 
@@ -69,13 +70,6 @@ prompt = ChatPromptTemplate.from_messages([
 
 ------------------------------------------
 
-**接口指南** 智谱[开放平台](https://open.bigmodel.cn/dev/api)大模型接口 Python SDK（Big Model API SDK in Python），让开发者更便捷的调用智谱开放API
+**官方接口指南** 智谱[开放平台](https://open.bigmodel.cn/dev/api)大模型接口 Python SDK（Big Model API SDK in Python），让开发者更便捷的调用智谱开放API
 
 **官方SDK** [![PyPI version](https://img.shields.io/pypi/v/zhipuai.svg)](https://pypi.org/project/zhipuai/)
-
-**官方SDK能力简介**
-- 对所有接口进行了类型封装。
-- 初始化client并调用成员函数，无需关注http调用过程的各种细节，所见即所得。
-- 默认缓存token。
-
-
