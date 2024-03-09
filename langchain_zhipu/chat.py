@@ -159,7 +159,7 @@ class ChatZhipuAI(BaseChatModel):
     
     api_key: str = None
 
-    model: str = Field(default="glm-3-turbo")
+    model: str = Field(default="glm-4")
     """所要调用的模型编码"""
 
     request_id: Optional[str] = None
