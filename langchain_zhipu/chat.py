@@ -45,25 +45,38 @@ def _convert_dict_to_message(_dict: Mapping[str, Any]) -> BaseMessage:
         The LangChain message.
     """
     role = _dict.get("role")
+    id_ = _dict.get("id")
     if role == "user":
-        return HumanMessage(content=_dict.get("content", ""))
+        return HumanMessage(content=_dict.get("content", ""), id=id_)
     elif role == "assistant":
+        # Fix for azure
+        # Also OpenAI returns None for tool invocations
         content = _dict.get("content", "") or ""
         additional_kwargs: Dict = {}
+        if function_call := _dict.get("function_call"):
+            additional_kwargs["function_call"] = dict(function_call)
         if tool_calls := _dict.get("tool_calls"):
             additional_kwargs["tool_calls"] = tool_calls
-        return AIMessage(content=content, additional_kwargs=additional_kwargs)
+        return AIMessage(content=content, additional_kwargs=additional_kwargs, id=id_)
     elif role == "system":
-        return SystemMessage(content=_dict.get("content", ""))
+        return SystemMessage(content=_dict.get("content", ""), id=id_)
+    elif role == "function":
+        return FunctionMessage(
+            content=_dict.get("content", ""), name=_dict.get("name"), id=id_
+        )
     elif role == "tool":
         additional_kwargs = {}
+        if "name" in _dict:
+            additional_kwargs["name"] = _dict["name"]
         return ToolMessage(
             content=_dict.get("content", ""),
             tool_call_id=_dict.get("tool_call_id"),
             additional_kwargs=additional_kwargs,
+            id=id_,
         )
     else:
-        return ChatMessage(content=_dict.get("content", ""), role=role)
+        return ChatMessage(content=_dict.get("content", ""), role=role, id=id_)
+
 
 def _convert_message_to_dict(message: BaseMessage) -> dict:
     """Convert a LangChain message to a dictionary.
@@ -81,6 +94,11 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
         message_dict = {"role": "user", "content": message.content}
     elif isinstance(message, AIMessage):
         message_dict = {"role": "assistant", "content": message.content}
+        if "function_call" in message.additional_kwargs:
+            message_dict["function_call"] = message.additional_kwargs["function_call"]
+            # If function call only, content is None not empty string
+            if message_dict["content"] == "":
+                message_dict["content"] = None
         if "tool_calls" in message.additional_kwargs:
             message_dict["tool_calls"] = message.additional_kwargs["tool_calls"]
             # If tool calls only, content is None not empty string
@@ -88,6 +106,12 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
                 message_dict["content"] = None
     elif isinstance(message, SystemMessage):
         message_dict = {"role": "system", "content": message.content}
+    elif isinstance(message, FunctionMessage):
+        message_dict = {
+            "role": "function",
+            "content": message.content,
+            "name": message.name,
+        }
     elif isinstance(message, ToolMessage):
         message_dict = {
             "role": "tool",
@@ -100,27 +124,41 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
         message_dict["name"] = message.additional_kwargs["name"]
     return message_dict
 
+
 def _convert_delta_to_message_chunk(
     _dict: Mapping[str, Any], default_class: Type[BaseMessageChunk]
 ) -> BaseMessageChunk:
+    id_ = _dict.get("id")
     role = cast(str, _dict.get("role"))
     content = cast(str, _dict.get("content") or "")
     additional_kwargs: Dict = {}
+    if _dict.get("function_call"):
+        function_call = dict(_dict["function_call"])
+        if "name" in function_call and function_call["name"] is None:
+            function_call["name"] = ""
+        additional_kwargs["function_call"] = function_call
     if _dict.get("tool_calls"):
         additional_kwargs["tool_calls"] = _dict["tool_calls"]
 
     if role == "user" or default_class == HumanMessageChunk:
-        return HumanMessageChunk(content=content)
+        return HumanMessageChunk(content=content, id=id_)
     elif role == "assistant" or default_class == AIMessageChunk:
-        return AIMessageChunk(content=content, additional_kwargs=additional_kwargs)
+        return AIMessageChunk(
+            content=content, additional_kwargs=additional_kwargs, id=id_
+        )
     elif role == "system" or default_class == SystemMessageChunk:
-        return SystemMessageChunk(content=content)
+        return SystemMessageChunk(content=content, id=id_)
+    elif role == "function" or default_class == FunctionMessageChunk:
+        return FunctionMessageChunk(content=content, name=_dict["name"], id=id_)
     elif role == "tool" or default_class == ToolMessageChunk:
-        return ToolMessageChunk(content=content, tool_call_id=_dict["tool_call_id"])
+        return ToolMessageChunk(
+            content=content, tool_call_id=_dict["tool_call_id"], id=id_
+        )
     elif role or default_class == ChatMessageChunk:
-        return ChatMessageChunk(content=content, role=role)
+        return ChatMessageChunk(content=content, role=role, id=id_)
     else:
-        return default_class(content=content)  # type: ignore
+        return default_class(content=content, id=id_)  # type: ignore
+
 
 class ChatZhipuAI(BaseChatModel):
     """支持最新的智谱API"""
@@ -210,6 +248,8 @@ class ChatZhipuAI(BaseChatModel):
     """
     用于控制模型是如何选择要调用的函数，仅当工具类型为function时补充。默认为auto，当前仅支持auto。
     """
+    
+    streaming: Optional[bool] = False
 
     @classmethod
     def filter_model_kwargs(cls):
@@ -262,6 +302,14 @@ class ChatZhipuAI(BaseChatModel):
         params.update({"stream": False})
         if stop is not None:
             params.update({"stop": stop})
+    
+        # 支持根据 stream 或 streaming 生成流
+        should_stream = stream if stream is not None else self.streaming
+        if should_stream:
+            stream_iter = self._stream(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
+            return generate_from_stream(stream_iter)
     
         # 调用模型
         response = self.client.chat.completions.create(
