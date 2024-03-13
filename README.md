@@ -6,7 +6,7 @@
 - 问题1: 智谱AI的官方SDK使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
 - 问题2: langchain.community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
 
-## 已支持全部 langchain 接口
+# 已支持全部 langchain 接口
 
 1. invoke
 2. ainvoke
@@ -17,17 +17,18 @@
 7. astream_events
 8. asteram_log
 
-## 已支持模型能力
+# 已支持模型能力
 
 - 已支持生成模型："glm-3-turbo", "glm-4", "glm-4v"
 - 已支持向量模型："embedding-2"
 - 逻辑推理和对话生成
 - 支持工具回调
 
+# 使用
 ## 简单的例子
 
 ```python
-from zhipuai_pydantic_v1 import ChatZhipuAI
+from langchain_zhipu import ChatZhipuAI
 llm = ChatZhipuAI()
 
 # invoke
@@ -67,6 +68,14 @@ prompt = ChatPromptTemplate.from_messages([
 
 (prompt|llm4v).invoke({})
 ```
+
+## 智能体
+
+请查看 [agent.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/agent.ipynb)
+
+# 更多用法
+
+请参考 [langchain_chinese](https://github.com/arcstep/langchain_chinese)
 
 ------------------------------------------
 
