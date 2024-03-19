@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain_zhipu"
-version = "4.0.15"
+version = "4.0.16"
 description = "将智谱AI集成到LangChain"
 license = "MIT"
 authors = ["arcstep <43801@qq.com>"]

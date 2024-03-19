@@ -2,6 +2,7 @@ from langchain_core.callbacks import (
     AsyncCallbackManagerForLLMRun,
     CallbackManagerForLLMRun,
 )
+
 from langchain_core.language_models.chat_models import (
     BaseChatModel,
     generate_from_stream,
@@ -253,11 +254,6 @@ class ChatZhipuAI(BaseChatModel):
     
     streaming: Optional[bool] = False
 
-    allowed_special: Union[Literal["all"], AbstractSet[str]] = set()
-    """Set of special tokens that are allowed。"""
-    disallowed_special: Union[Literal["all"], Collection[str]] = "all"
-    """Set of special tokens that are not allowed。"""
-
     @classmethod
     def filter_model_kwargs(cls):
         """
@@ -443,9 +439,5 @@ class ChatZhipuAI(BaseChatModel):
     def get_token_ids(self, text: str) -> List[int]:
         """Get the token IDs using the tiktoken package."""
 
-        enc = tiktoken.get_encoding("cl100k_base")
-        return enc.encode(
-            text,
-            allowed_special=self.allowed_special,
-            disallowed_special=self.disallowed_special,
-        )
+        encoding_model = tiktoken.get_encoding("cl100k_base")
+        return encoding_model.encode(text)
