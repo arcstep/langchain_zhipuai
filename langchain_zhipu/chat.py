@@ -15,7 +15,9 @@ from typing import Type, Any, Mapping, Dict, Iterator, List, Optional, cast
 
 # async
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncIterator, Union, Literal, AbstractSet, Collection
+
+import tiktoken
 
 # all message types
 from langchain_core.messages import (
@@ -251,6 +253,11 @@ class ChatZhipuAI(BaseChatModel):
     
     streaming: Optional[bool] = False
 
+    allowed_special: Union[Literal["all"], AbstractSet[str]] = set()
+    """Set of special tokens that are allowed。"""
+    disallowed_special: Union[Literal["all"], Collection[str]] = "all"
+    """Set of special tokens that are not allowed。"""
+
     @classmethod
     def filter_model_kwargs(cls):
         """
@@ -432,3 +439,13 @@ class ChatZhipuAI(BaseChatModel):
             if run_manager:
                 await run_manager.on_llm_new_token(chunk.text, chunk=chunk)
             yield chunk
+
+    def get_token_ids(self, text: str) -> List[int]:
+        """Get the token IDs using the tiktoken package."""
+
+        enc = tiktoken.get_encoding("cl100k_base")
+        return enc.encode(
+            text,
+            allowed_special=self.allowed_special,
+            disallowed_special=self.disallowed_special,
+        )
