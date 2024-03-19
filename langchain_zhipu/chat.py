@@ -403,7 +403,6 @@ class ChatZhipuAI(BaseChatModel):
         if stop is not None:
             params.update({"stop": stop})
 
-
         # 创建一个新的函数来调用 self.client.chat.completions.create
         def create_completions():
             return self.client.chat.completions.create(
