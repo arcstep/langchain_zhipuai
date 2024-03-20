@@ -12,11 +12,13 @@ from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResu
 from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
 
 # common types
-from typing import Type, Any, Mapping, Dict, Iterator, List, Optional, cast
+from typing import (
+    Type, Any, Mapping, Dict, Iterator, List, Optional, cast,
+    AsyncIterator, Union, Literal, AbstractSet, Collection
+)
 
 # async
 import asyncio
-from typing import AsyncIterator, Union, Literal, AbstractSet, Collection
 
 import tiktoken
 
@@ -253,6 +255,15 @@ class ChatZhipuAI(BaseChatModel):
     """
     
     streaming: Optional[bool] = False
+    """
+    流式输出。
+    """
+
+    allowed_special: Union[Literal["all"], AbstractSet[str]] = set()
+    """Set of special tokens that are allowed。"""
+
+    disallowed_special: Union[Literal["all"], Collection[str]] = "all"
+    """Set of special tokens that are not allowed。"""
 
     @classmethod
     def filter_model_kwargs(cls):
@@ -439,4 +450,8 @@ class ChatZhipuAI(BaseChatModel):
         """Get the token IDs using the tiktoken package."""
 
         encoding_model = tiktoken.get_encoding("cl100k_base")
-        return encoding_model.encode(text)
+        return encoding_model.encode(
+            text,
+            allowed_special=self.allowed_special,
+            disallowed_special=self.disallowed_special,
+        )
