@@ -32,6 +32,8 @@ from langchain_core.messages import (
     HumanMessageChunk,
     ToolMessage,
     ToolMessageChunk,
+    FunctionMessage,
+    FunctionMessageChunk,
     SystemMessage,
     SystemMessageChunk,
     ChatMessage,
