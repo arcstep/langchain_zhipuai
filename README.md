@@ -23,8 +23,11 @@
 - 已支持向量模型："embedding-2"
 - 逻辑推理和对话生成
 - 支持工具回调
+- 支持智能体
+- 支持RAG
 
 # 使用
+
 ## 简单的例子
 
 ```python
@@ -41,6 +44,34 @@ for s in llm.stream("hi"):
 # astream
 async for s in llm.astream("hi"):
   print(s)
+```
+
+## retrieval 工具
+
+```python
+from langchain_zhipu import convert_to_retrieval_tool
+llm.bind(tools=[convert_to_retrieval_tool(knowledge_id="1772979648448397312")]).invoke("你知道马冬梅住哪里吗？")
+```
+
+## web_search 工具
+
+```python
+from langchain_zhipu import convert_to_web_search_tool
+llm.bind(tools=[convert_to_web_search_tool(search_query="周星驰电影")]).invoke("哪部电影好看？")
+```
+
+## function 工具
+
+```python
+from langchain_core.utils.function_calling import convert_to_openai_tool
+from langchain.tools import tool
+
+@tool
+def search(query: str) -> str:
+    """查询 langchan 资料; args: query 类型为字符串，描述用户的问题."""
+    return "langchain_chinese 是一个为中国大模型优化的langchain模块"
+
+llm.bind(tools=[convert_to_openai_tool(search)]).invoke("langchain_chinese是啥？请查询本地资料回答。")
 ```
 
 ## 使用glm-4v
