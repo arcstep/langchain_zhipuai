@@ -266,7 +266,7 @@ class ChatZhipuAI(BaseChatModel):
 
     disallowed_special: Union[Literal["all"], Collection[str]] = "all"
     """Set of special tokens that are not allowed。"""
-
+    
     @classmethod
     def filter_model_kwargs(cls):
         """

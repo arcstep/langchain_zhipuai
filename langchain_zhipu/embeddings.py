@@ -26,12 +26,12 @@ class ZhipuAIEmbeddings(BaseModel, Embeddings):
     """访问智谱AI的客户端"""
     
     api_key: str = None
-
+    
     model: str = Field(default="embedding-2")
     """所要调用的模型编码"""
 
     @root_validator()
-    def validate_environment(cls, values: Dict) -> Dict:
+    def validate_environment(cls, values: Dict) -> Dict:        
         if values["api_key"] is not None:
             values["client"] =  ZhipuAI(api_key=values["api_key"])
         else:

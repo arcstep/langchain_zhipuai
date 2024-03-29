@@ -15,7 +15,9 @@ from httpx import Timeout
 
 
 class ZhipuAI(HttpClient):
-    chat: api_resource.chat
+    chat: api_resource.chat.Chat
+    embeddings: api_resource.embeddings.Embeddings
+    knowledge_embeddings: api_resource.knowledge.base.Embeddings
     api_key: str
 
     def __init__(
@@ -49,6 +51,7 @@ class ZhipuAI(HttpClient):
         self.chat = api_resource.chat.Chat(self)
         self.images = api_resource.images.Images(self)
         self.embeddings = api_resource.embeddings.Embeddings(self)
+        self.knowledge_embeddings = api_resource.knowledge.base.Embeddings(self)
         self.files = api_resource.files.Files(self)
         self.fine_tuning = api_resource.fine_tuning.FineTuning(self)
 
