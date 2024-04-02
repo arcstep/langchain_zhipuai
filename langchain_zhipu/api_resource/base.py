@@ -2,6 +2,8 @@ import time
 import jwt
 import os
 
+DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/llm-application/open"
+
 def generate_token(apikey: str = None, exp_seconds: int = 100) -> str:
     """
     apikey : 从智谱AI申请的 ZHIPUAI_API_KEY
