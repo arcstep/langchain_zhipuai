@@ -17,7 +17,11 @@ from langchain_core.utils import (
 import asyncio
 from typing import AsyncIterator
 
-from .._client import ZhipuAI
+from ..http import RestAPI
+
+import os
+
+DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/llm-application/open"
 
 class ZhipuAIKnowledge(BaseModel):
     """支持最新的智谱API向量模型"""
@@ -25,22 +29,21 @@ class ZhipuAIKnowledge(BaseModel):
     client: Any = None
     """访问智谱AI的客户端"""
     
-    api_key: str = None
+    base_url: str = DEFAULT_BASE_URL
+    """访问智谱AI的服务器地址"""
+    
+    api_key: str = os.environ.get('ZHIPUAI_API_KEY') 
+    """API KEY"""
     
     model: str = Field(default="embedding-2")
     """所要调用的模型编码"""
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
-        base_url: str = "https://open.bigmodel.cn/api/llm-application/open"
-        
-        if values["api_key"] is not None:
-            values["client"] =  ZhipuAI(api_key=values["api_key"], base_url=base_url)
-        else:
-            values["client"] =  ZhipuAI(base_url=base_url)
+        values["client"] =  RestAPI(base_url=values["base_url"], api_key=values["api_key"])
         return values
-    
+
     def list_models(self):
-        """Get all embedding models."""
-        response = self.client.knowledge_embeddings.list_models()
+        """用于获取当前支持的向量模型列表。"""
+        response = self.client.action_get("embedding")
         return response
