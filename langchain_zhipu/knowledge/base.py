@@ -13,11 +13,8 @@ from langchain_core.utils import (
     get_pydantic_field_names,
 )
 
-# async
-import asyncio
-from typing import AsyncIterator
-
 from ..http import RestAPI
+from .types import KnowledgeBase
 
 import os
 
@@ -43,7 +40,63 @@ class ZhipuAIKnowledge(BaseModel):
         values["client"] =  RestAPI(base_url=values["base_url"], api_key=values["api_key"])
         return values
 
-    def list_models(self):
-        """用于获取当前支持的向量模型列表。"""
-        response = self.client.action_get("embedding")
+    ############ 模型列表 ###########
+    def models_list(self):
+        """
+        用于获取当前支持的向量模型列表。
+        """
+        response = self.client.action_get(request="embedding")
         return response
+
+    ############ 知识库管理 ###########
+    def knowledge_create(self, knowledge: KnowledgeBase):
+        """
+        创建个人知识库。
+
+        返回生成的知识库ID。
+        """
+        response = self.client.action_post(request="knowledge", data=knowledge)
+        return response
+    
+    def knowledge_update(self, id: str, knowledge: KnowledgeBase):
+        """
+        修改知识库。
+
+        Args:
+            id (str): 要修改的知识库ID
+            knowledge (KnowledgeBase): 修改内容
+        """
+        response = self.client.action_put(request=f"knowledge/{id}", data=knowledge)
+        return response
+
+    def knowledge_list(self, page: int = 1, size: int = 10):
+        """
+        列举知识库清单。
+        """
+        params = {"page": page, "size": size}
+        response = self.client.action_get(request="knowledge", **params)
+        return response
+
+    def knowledge_detail(self, id: str):
+        """
+        获取个人知识库详情。
+        """
+        response = self.client.action_get(request=f"knowledge/{id}")
+        return response
+    
+    def knowledge_remove(self, id: str):
+        """
+        获取个人知识库详情。
+        """
+        response = self.client.action_delete(request=f"knowledge/{id}")
+        return response
+    
+    def knowledge_capacity(self):
+        """
+        知识库使用量详情
+        """
+        response = self.client.action_get(request="knowledge/capacity")
+        return response
+    
+    ############ 知识文档管理 ###########
+    
