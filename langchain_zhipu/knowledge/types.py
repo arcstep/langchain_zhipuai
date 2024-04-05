@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from langchain_core.pydantic_v1 import BaseModel
 
 class KnowledgeBase(BaseModel):

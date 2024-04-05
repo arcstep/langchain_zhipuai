@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import jwt
+from typing import Any
 
 class RestAPI():
     """
@@ -21,7 +22,7 @@ class RestAPI():
         self.base_url = base_url
         self.api_key = api_key
 
-    def action_get(self, request: str):
+    def action_get(self, request: str, **kwargs):
         """GET"""
         
         url = f'{self.base_url}/{request}'
@@ -30,12 +31,15 @@ class RestAPI():
             'Authorization': f'Bearer {self.generate_token()}',
             'Content-Type': 'application/json',
         }
-
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, params=kwargs)
         
-        return json.loads(response.text)
+        obj = json.loads(response.text)
+        if obj["code"] == 200:
+            return obj["data"]
+        else:
+            raise Exception(obj)
 
-    def action_post(rself, equest: str, data):
+    def action_post(self, request: str, data: Any):
         """POST"""
         
         url = f'{self.base_url}/{request}'
@@ -43,23 +47,46 @@ class RestAPI():
             'Authorization': f'Bearer {self.generate_token()}',
             'Content-Type': 'application/json',
         }
-
         response = requests.post(url, headers=headers, data=json.dumps(data))
         
-        return json.loads(response.text)
+        obj = json.loads(response.text)
+        if obj["code"] == 200:
+            return obj["data"]
+        else:
+            raise Exception(obj)
 
-    def action_put(self, request: str, id: str, data):
+    def action_put(self, request: str, data: Any):
         """PUT"""
         
-        url = f'{self.base_url}/{request}/{id}'
+        url = f'{self.base_url}/{request}'
+        headers = {
+            'Authorization': f'Bearer {self.generate_token()}',
+            'Content-Type': 'application/json',
+        }
+        response = requests.put(url, headers=headers, data=json.dumps(data))
+        
+        obj = json.loads(response.text)
+        if obj["code"] == 200:
+            return obj
+        else:
+            raise Exception(obj)
+
+    def action_delete(self, request: str, id: str):
+        """DELETE"""
+        
+        url = f'{self.base_url}/{request}'
         headers = {
             'Authorization': f'Bearer {self.generate_token()}',
             'Content-Type': 'application/json',
         }
 
-        response = requests.put(url, headers=headers, data=json.dumps(data))
+        response = requests.delete(url, headers=headers)
         
-        return json.loads(response.text)
+        obj = json.loads(response.text)
+        if obj["code"] == 200:
+            return obj
+        else:
+            raise Exception(obj)
 
     def generate_token(self) -> str:
         """
