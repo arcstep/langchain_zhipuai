@@ -1,7 +1,7 @@
 from typing import Optional, List
 from langchain_core.pydantic_v1 import BaseModel
 
-class KnowledgeBase(BaseModel):
+class KnowledgeLibrary(BaseModel):
     id: Optional[str]               # 知识库唯一 id
     embedding_id: Optional[int]     # 知识库绑定的向量化模型
     name: Optional[str]             # 知识库名称
@@ -11,6 +11,28 @@ class KnowledgeBase(BaseModel):
     word_num: Optional[int]         # 知识库总字数
     length: Optional[int]           # 知识库总大小（字节）
     document_size: Optional[int]    # 知识文件数量
+
+class KnowledgeFilesMeta(BaseModel):
+    knowledge_type: Optional[int]   # 知识库文档的类型：
+                                    # 1 文章知识：pdf、url、docx
+                                    # 2 问答知识-文档：支持pdf、url、docx
+                                    # 3 问答知识-表格：支持xlsx
+                                    # 4 商品库-表格：支持xlsx
+                                    # 5 自定义：支持pdf、url、docx
+    custom_seperator: Optional[List[str]] # 当知识类型为自定义时的分割字符串，默认\n
+    custom_sentence_size: Optional[List[int]] # 当知识类型为自定义时的切片大小，20-2000，默认为300
+
+class KnowledgeUrlsMeta(BaseModel):
+    url: Optional[str]              # 网页或文件下载地址
+    knowledge_type: Optional[int]   # 知识库文档的类型：
+                                    # 1 文章知识：pdf、url、docx
+                                    # 2 问答知识-文档：支持pdf、url、docx
+                                    # 3 问答知识-表格：支持xlsx
+                                    # 4 商品库-表格：支持xlsx
+                                    # 5 自定义：支持pdf、url、docx
+    custom_seperator: Optional[List[str]] # 当知识类型为自定义时的分割字符串，默认\n
+    custom_sentence_size: Optional[List[int]] # 当知识类型为自定义时的切片大小，20-2000，默认为300
+    
 
 class UploadDetail(BaseModel):
     key: Optional[str]              # 上传文档接口返回的key
