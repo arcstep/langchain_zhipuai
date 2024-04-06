@@ -39,31 +39,37 @@ class RestAPI():
         else:
             raise Exception(obj)
 
-    def action_post(self, request: str, data: Any):
-        """POST"""
-        
-        url = f'{self.base_url}/{request}'
-        headers = {
-            'Authorization': f'Bearer {self.generate_token()}',
-            'Content-Type': 'application/json',
-        }
-        response = requests.post(url, headers=headers, data=json.dumps(data))
-        
-        obj = json.loads(response.text)
-        if obj["code"] == 200:
-            return obj["data"]
-        else:
-            raise Exception(obj)
+    def action_post(self, request: str, files=None, **kwargs):
+      """POST"""
+      
+      url = f'{self.base_url}/{request}'
+      headers = {
+        'Authorization': f'Bearer {self.generate_token()}',
+        # 根据是否提供了 files 参数来设置 'Content-Type'
+        'Content-Type': 'application/json' if not files else None,
+      }
+      
+      # 如果提供了 files 参数就需要将 kwargs 视作表单来处理
+      data = kwargs if files else json.dumps(kwargs)
+      
+      response = requests.post(url, headers=headers, data=data, files=files)
+      
+      obj = json.loads(response.text)
+      if obj["code"] == 200:
+        return obj["data"]
+      else:
+        raise Exception(obj)
 
-    def action_put(self, request: str, data: Any):
+    def action_put(self, request: str, **kwargs):
         """PUT"""
         
         url = f'{self.base_url}/{request}'
         headers = {
             'Authorization': f'Bearer {self.generate_token()}',
+            # 根据数据类型设置正确的 'Content-Type'
             'Content-Type': 'application/json',
         }
-        response = requests.put(url, headers=headers, data=json.dumps(data))
+        response = requests.put(url, headers=headers, data=json.dumps(kwargs))
         
         obj = json.loads(response.text)
         if obj["code"] == 200:
@@ -71,7 +77,7 @@ class RestAPI():
         else:
             raise Exception(obj)
 
-    def action_delete(self, request: str, id: str):
+    def action_delete(self, request: str):
         """DELETE"""
         
         url = f'{self.base_url}/{request}'
