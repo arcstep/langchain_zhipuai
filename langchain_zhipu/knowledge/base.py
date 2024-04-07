@@ -1,6 +1,11 @@
 # common types
 from typing import Type, Any, Mapping, Dict, Iterator, List, Optional, cast
 
+from langchain_core.language_models.chat_models import (
+    BaseChatModel,
+    generate_from_stream,
+)
+
 from langchain_core.embeddings import Embeddings
 from langchain_core.pydantic_v1 import (
     BaseModel,
@@ -13,6 +18,11 @@ from langchain_core.utils import (
     get_pydantic_field_names,
 )
 
+from langchain_community.adapters.openai import (
+    convert_message_to_dict,
+    convert_dict_to_message,
+)
+
 from ..http import RestAPI
 from .types import KnowledgeUrlsMeta
 
@@ -20,11 +30,41 @@ import os
 
 DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/llm-application/open"
 
-class ZhipuAIKnowledge(BaseModel):
-    """支持最新的智谱API向量模型"""
+class ZhipuAIKnowledge(BaseChatModel):
+    """
+    支持V4版本智谱AI的云服务中知识库能力。
+    
+    **知识库管理** 有以下函数可用：
+    - knowledge_create 用来创建知识库
+    - knowledge_update 用来更新知识库元数据
+    - knowledge_list 用来列举有哪些知识库
+    - knowledge_detail 用来查看知识库详情
+    - knowledge_remove 用来删除已经建好的知识库
+    - knowledge_capacity 用来查看已使用的知识库容量
+
+    **知识文档管理** 有以下函数可用：
+    - document_upload_url
+    - document_upload_files
+    - document_update
+    - document_list
+    - document_detail
+    - document_remove
+    - document_retry_embedding
+
+    **应用管理** 有以下函数可用：
+    - application_create
+    - application_update
+    - application_list
+    - application_detail
+    - application_remove
+
+    """
 
     client: Any = None
     """访问智谱AI的客户端"""
+    
+    application_id: str = None
+    """基于在线知识库的大模型应用ID"""
     
     base_url: str = DEFAULT_BASE_URL
     """访问智谱AI的服务器地址"""
@@ -34,6 +74,15 @@ class ZhipuAIKnowledge(BaseModel):
     
     model: str = Field(default="embedding-2")
     """所要调用的模型编码"""
+
+    @property
+    def lc_secrets(self) -> Dict[str, str]:
+        return {"zhipuai_api_key": "ZHIPUAI_API_KEY"}
+
+    @property
+    def _llm_type(self) -> str:
+        """Return the type of chat model."""
+        return "zhipuai-knowledge"
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
@@ -236,3 +285,111 @@ class ZhipuAIKnowledge(BaseModel):
         return response
 
     ############ 使用创建的应用调用大模型 ###########
+    def _app_invoke(self, application_id: str, prompt: Any, **kwargs):
+        """
+        基于预设的知识库应用调用大模型。
+
+        Args:
+            application_id (str): 应用ID
+        """
+        params = {"prompt": prompt, **kwargs}
+        response = self.client.action_post(request=f"model-api/{application_id}/invoke", **params)
+        return response
+    
+    def _app_sse_invoke(self, application_id: str, prompt: Any, incremental: bool=True, **kwargs):
+        """
+        基于预设的知识库应用调用大模型。
+
+        Args:
+            application_id (str): 应用ID
+        """
+        params = {"prompt": prompt, "incremental": incremental, **kwargs}
+        response = self.client.action_sse_post(request=f"model-api/{application_id}/sse-invoke", **params)
+        return response
+
+    # 实现 invoke 调用方法
+    def _generate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stream: Optional[bool] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        """实现 ZhiputAI 知识库应用的同步调用"""
+        prompt = [convert_message_to_dict(message) for message in messages]
+
+        # 构造参数序列
+        params = kwargs
+    
+        # 调用模型
+        if not self.application_id:
+            raise Exception({"message": "application_id MUST not None!"})
+
+        response = self._app_invoke(
+            application_id=self.application_id,
+            prompt=prompt,
+            **kwargs
+        )
+
+        generations = []
+        if not isinstance(response, dict):
+            response = response.dict()
+
+        message = convert_dict_to_message(res["message"])
+        generation_info = {"finish_reason": "Finish"}
+        gen = ChatGeneration(
+            message=message,
+            generation_info=generation_info,
+        )
+        generations.append(gen)
+
+        llm_output = {
+            "id": response.get("requestId"),
+        }
+        return ChatResult(generations=generations, llm_output=llm_output)
+
+    # 实现 stream 调用方法
+    def _stream(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> Iterator[ChatGenerationChunk]:
+        """实现 ZhiputAI 知识库应用的事件流调用"""
+        prompt = [convert_message_to_dict(message) for message in messages]
+
+        # 使用流输出
+        # 构造参数序列
+        params = self.get_model_kwargs()
+        params.update(kwargs)
+        params.update({"stream": True})
+        if stop is not None:
+            params.update({"stop": stop})
+    
+        responses = self.client.chat.completions.create(
+            messages=prompt,
+            **params
+        )
+
+        default_chunk_class = AIMessageChunk
+        for response in responses:                
+            if not isinstance(response, dict):
+                response = response.dict()
+            if len(response["choices"]) == 0:
+                continue
+            choice = response["choices"][0]
+            chunk = _convert_delta_to_message_chunk(
+                choice["delta"], default_chunk_class
+            )
+            generation_info = {}
+            if finish_reason := choice.get("finish_reason"):
+                generation_info["finish_reason"] = finish_reason
+            default_chunk_class = chunk.__class__
+            chunk = ChatGenerationChunk(
+                message=chunk, generation_info=generation_info or None
+            )
+            if run_manager:
+                run_manager.on_llm_new_token(chunk.text, chunk=chunk)
+            yield chunk
