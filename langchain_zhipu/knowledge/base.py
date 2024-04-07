@@ -51,7 +51,7 @@ class ZhipuAIKnowledge(BaseModel):
     ############ 知识库管理 ###########
     def knowledge_create(self, **kwargs):
         """
-        创建个人知识库。
+        创建知识库。
 
         返回生成的知识库ID。
         """
@@ -78,21 +78,21 @@ class ZhipuAIKnowledge(BaseModel):
 
     def knowledge_detail(self, knowledge_id: str):
         """
-        获取个人知识库详情。
+        获取知识库详情。
         """
         response = self.client.action_get(request=f"knowledge/{knowledge_id}")
         return response
     
     def knowledge_remove(self, knowledge_id: str):
         """
-        删除个人知识库详情。
+        删除知识库。
         """
         response = self.client.action_delete(request=f"knowledge/{knowledge_id}")
         return response
     
     def knowledge_capacity(self):
         """
-        知识库使用量详情
+        获取整体的知识库使用量详情。
         """
         response = self.client.action_get(request="knowledge/capacity")
         return response
@@ -100,7 +100,7 @@ class ZhipuAIKnowledge(BaseModel):
     ############ 知识文档管理 ###########
     def document_upload_url(self, knowledge_id: str, urls: List[KnowledgeUrlsMeta]):
         """
-        按照知识库ID和URL，下载文件或读取网页并创建为知识
+        按照知识库ID和URL，下载文件或读取网页并创建为知识。
 
         Args:
             knowledge_id (str): 知识库ID
@@ -113,7 +113,7 @@ class ZhipuAIKnowledge(BaseModel):
 
     def document_upload_files(self, knowledge_id: str, file_paths: List[str], **kwargs):
         """
-        按照知识库ID，上传知识文档
+        按照知识库ID，上传知识文档。
 
         Args:
             knowledge_id (str): 知识库ID
@@ -134,19 +134,18 @@ class ZhipuAIKnowledge(BaseModel):
 
     def document_update(self, document_id: str, **kwargs):
         """
-        根据文档ID，修改知识文档元数据
+        根据文档ID，修改知识文档元数据。
 
         Args:
             document_id (str): 知识文档ID
             **kwargs: 文档元数据描述
         """
-        # 使用字典推导式创建一个文件名到文件数据的映射
         response = self.client.action_put(request=f"document/{document_id}", **kwargs)        
         return response
 
     def document_list(self, knowledge_id: str, **kwargs):
         """
-        获取个人知识库文档清单。
+        获取知识库文档清单。
 
         Args:
             knowledge_id (str): 知识库ID
@@ -161,25 +160,79 @@ class ZhipuAIKnowledge(BaseModel):
         Args:
             document_id (str): 知识文档ID
         """
-        # 使用字典推导式创建一个文件名到文件数据的映射
         response = self.client.action_get(request=f"document/{document_id}")        
         return response
 
     def document_remove(self, document_id: str):
         """
-        删除个人知识库详情。
+        删除知识库文档。
         """
         response = self.client.action_delete(request=f"document/{document_id}")
         return response
 
     def document_retry_embedding(self, document_id: str):
         """
-        根据文档ID，重新向量化文档
+        根据文档ID，重新向量化文档。
 
         Args:
             document_id (str): 知识文档ID
         """
-        # 使用字典推导式创建一个文件名到文件数据的映射
         response = self.client.action_post(request=f"document/embedding/{document_id}")        
         return response
 
+    ############ 应用管理 ###########
+    def application_create(self, name: str, desc: str, knowledge_ids: List[str], **kwargs):
+        """
+        创建基于知识库的应用。
+
+        Args:
+            name (str): 应用名称
+            desc (str): 应用描述
+            knowledge_ids (List[str]): 知识库列表
+        """
+        params = {"name": name, "desc": desc, "knowledge_ids": knowledge_ids, **kwargs}
+        response = self.client.action_post(request=f"application", **params)
+
+        return response 
+
+    def application_update(self, application_id: str, **kwargs):
+        """
+        修改知识库应用。
+
+        KWArgs:
+            name (str): 应用名称
+            desc (str): 应用描述
+            knowledge_ids (List[str]): 知识库列表
+            ...
+        """
+        response = self.client.action_put(request=f"application/{application_id}", **kwargs)
+
+        return response 
+
+    def application_list(self, **kwargs):
+        """
+        获取知识库应用清单。
+
+        Args:
+        """
+        response = self.client.action_get(request=f"application", **kwargs)
+        return response
+
+    def application_detail(self, application_id: str):
+        """
+        获取某个知识库应用的详情。
+
+        Args:
+            application_id (str): 应用ID
+        """
+        response = self.client.action_get(request=f"application/{application_id}")        
+        return response
+
+    def application_remove(self, application_id: str):
+        """
+        删除知识库应用。
+        """
+        response = self.client.action_delete(request=f"application/{application_id}")
+        return response
+
+    ############ 使用创建的应用调用大模型 ###########
