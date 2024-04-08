@@ -25,12 +25,13 @@ from langchain_community.adapters.openai import (
 
 from ..http import RestAPI
 from .types import KnowledgeUrlsMeta
+from .chat import BaseChatZhipuAI
 
 import os
 
 DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/llm-application/open"
 
-class ZhipuAIKnowledge(BaseChatModel):
+class ZhipuAIKnowledge(BaseChatZhipuAI):
     """
     支持V4版本智谱AI的云服务中知识库能力。
     
@@ -307,8 +308,29 @@ class ZhipuAIKnowledge(BaseChatModel):
         response = self.client.action_sse_post(request=f"model-api/{application_id}/sse-invoke", **params)
         return response
 
+    def _invoke(prompt: Any, stop: Optional[List[str]] = None, **kwargs):
+        return self._app_invoke(
+            application_id=self.application_id,
+            prompt=prompt,
+            **kwargs
+        )
+
+    def _sse_invoke(prompt: Any, stop: Optional[List[str]] = None, **kwargs):
+        # 构造参数序列
+        params = self.get_model_kwargs()
+        params.update(kwargs)
+        params.update({"stream": True})
+        if stop is not None:
+            params.update({"stop": stop})
+    
+        # 调用模型
+        return self.client.chat.completions.create(
+            messages=prompt,
+            **params
+        )
+        
     # 实现 invoke 调用方法
-    def _generate(
+    def _invoke(
         self,
         messages: List[BaseMessage],
         stop: Optional[List[str]] = None,
@@ -348,48 +370,3 @@ class ZhipuAIKnowledge(BaseChatModel):
             "id": response.get("requestId"),
         }
         return ChatResult(generations=generations, llm_output=llm_output)
-
-    # 实现 stream 调用方法
-    def _stream(
-        self,
-        messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
-        **kwargs: Any,
-    ) -> Iterator[ChatGenerationChunk]:
-        """实现 ZhiputAI 知识库应用的事件流调用"""
-        prompt = [convert_message_to_dict(message) for message in messages]
-
-        # 使用流输出
-        # 构造参数序列
-        params = self.get_model_kwargs()
-        params.update(kwargs)
-        params.update({"stream": True})
-        if stop is not None:
-            params.update({"stop": stop})
-    
-        responses = self.client.chat.completions.create(
-            messages=prompt,
-            **params
-        )
-
-        default_chunk_class = AIMessageChunk
-        for response in responses:                
-            if not isinstance(response, dict):
-                response = response.dict()
-            if len(response["choices"]) == 0:
-                continue
-            choice = response["choices"][0]
-            chunk = _convert_delta_to_message_chunk(
-                choice["delta"], default_chunk_class
-            )
-            generation_info = {}
-            if finish_reason := choice.get("finish_reason"):
-                generation_info["finish_reason"] = finish_reason
-            default_chunk_class = chunk.__class__
-            chunk = ChatGenerationChunk(
-                message=chunk, generation_info=generation_info or None
-            )
-            if run_manager:
-                run_manager.on_llm_new_token(chunk.text, chunk=chunk)
-            yield chunk
