@@ -53,6 +53,56 @@ class RestAPI(BaseModel):
         else:
             raise Exception(obj)
 
+    def complete(self, request: str, files=None, **kwargs):
+        """POST"""
+        
+        url = f'{self.base_url}/{request}'
+        headers = self._generate_headers(files)
+        
+        # 如果提供了 files 参数就需要将 kwargs 视作表单来处理
+        data = kwargs if files else json.dumps(kwargs)
+        
+        response = self.session.post(url, headers=headers, data=data, files=files)
+        
+        # print("-"*80)
+        # print(response.text)
+
+        if response.status_code == 200:
+            if response.text:
+                return response.json()
+            else:
+                return {}
+        else:
+            raise Exception({
+                "status_code": response.status_code,
+                "headers": response.headers,
+                "text": response.text,
+            })
+
+    def complete_sse(self, request: str, files=None, **kwargs):
+        """POST"""
+        
+        url = f'{self.base_url}/{request}'
+        headers = self._generate_headers()
+        data = json.dumps(kwargs)
+
+        # 尝试发送请求，如果发生 SSLError 异常，重试请求        
+        for _ in range(3):
+            try:
+                return self.session.post(url, headers=headers, data=data, stream=True)
+            
+            except SSLError:
+                continue
+        else:
+            raise Exception("Max retries exceeded with SSLError")
+
+        if response.status_code != 200:
+            raise Exception({
+                "status_code": response.status_code,
+                "headers": response.headers,
+                "text": response.text,
+            })
+
     def action_post(self, request: str, files=None, **kwargs):
         """POST"""
         
@@ -63,12 +113,20 @@ class RestAPI(BaseModel):
         data = kwargs if files else json.dumps(kwargs)
         
         response = self.session.post(url, headers=headers, data=data, files=files)
+        print("-"*80)
+        print(response.text)
 
-        obj = json.loads(response.text)
-        if obj["code"] == 200:
-            return obj
+        if response.status_code == 200:
+            if response.text:
+                return response.json()
+            else:
+                return {}
         else:
-            raise Exception(obj)
+            raise Exception({
+                "status_code": response.status_code,
+                "headers": response.headers,
+                "text": response.text,
+            })
     
     def action_sse_post(self, request: str, **kwargs):
         """POST for SSE"""
@@ -80,16 +138,18 @@ class RestAPI(BaseModel):
         # 尝试发送请求，如果发生 SSLError 异常，重试请求        
         for _ in range(3):
             try:
-                response = self.session.post(url, headers=headers, data=data, stream=True)
-                return response
-                break
+                return self.session.post(url, headers=headers, data=data, stream=True)
             except SSLError:
                 continue
         else:
             raise Exception("Max retries exceeded with SSLError")
 
         if response.status_code != 200:
-            raise Exception(f"Request failed with status {response.status_code}")
+            raise Exception({
+                "status_code": response.status_code,
+                "headers": response.headers,
+                "text": response.text,
+            })
 
     def action_put(self, request: str, **kwargs):
         """PUT"""
@@ -98,11 +158,14 @@ class RestAPI(BaseModel):
         headers = self._generate_headers()
         response = self.session.put(url, headers=headers, data=json.dumps(kwargs))
         
-        obj = json.loads(response.text)
-        if obj["code"] == 200:
-            return obj
+        if response.status_code == 200:
+            return response.json()
         else:
-            raise Exception(obj)
+            raise Exception({
+                "status_code": response.status_code,
+                "headers": response.headers,
+                "text": response.text,
+            })
 
     def action_delete(self, request: str):
         """DELETE"""
@@ -111,11 +174,14 @@ class RestAPI(BaseModel):
         headers = self._generate_headers()
         response = self.session.delete(url, headers=headers)
         
-        obj = json.loads(response.text)
-        if obj["code"] == 200:
-            return obj
+        if response.status_code == 200:
+            return response.json()
         else:
-            raise Exception(obj)
+            raise Exception({
+                "status_code": response.status_code,
+                "headers": response.headers,
+                "text": response.text,
+            })
         
     def _generate_headers(self, files = None) -> dict:
         headers = {
