@@ -9,6 +9,7 @@ from typing import (
 from .base import BaseChatZhipuAI
 
 import time
+import json
 
 class ChatZhipuAI(BaseChatZhipuAI):
     """支持最新的智谱API"""
@@ -89,26 +90,33 @@ class ChatZhipuAI(BaseChatZhipuAI):
 
     def _ask_remote(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
         params = self.get_model_kwargs()
-        params.update(kwargs)
+        params.update({"messages": prompt, **kwargs})
         params.update({"stream": False})
         if stop is not None:
             params.update({"stop": stop})
     
-        reply = self.client.action_post(request=f"api/paas/v4/chat/completions", **params)
+        reply = self.client.complete(request=f"api/paas/v4/chat/completions", **params)
         
         return reply
 
     def _ask_remote_sse(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
         params = self.get_model_kwargs()
-        params.update(kwargs)
+        params.update({"messages": prompt, **kwargs})
         params.update({"stream": True})
         if stop is not None:
             params.update({"stop": stop})
     
-        replies = self.client.action_sse_post(request=f"api/paas/v4/chat/completions", **params)
+        replies = self.client.complete_sse(request=f"api/paas/v4/chat/completions", **params)
         
-        for reply in replies:
-            yield reply
+        for line in replies.iter_lines():
+            if line:  # 过滤掉心跳信号（即空行）
+                line_utf8 = line.decode('utf-8')
+
+                # 如果这一行是数据就返回结果，否则忽略
+                if line_utf8.startswith("data: {"):
+                    text = line_utf8[6:]
+                    if text is not None:
+                        yield json.loads(text)
 
 class KnowledgeChatZhipuAI(ChatZhipuAI):
     """

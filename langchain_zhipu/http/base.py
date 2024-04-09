@@ -156,10 +156,12 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
     async def _ask_aremote_sse(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
         """异步的SSE调用"""
         def _func():
-            return _ask_remote_sse(prompt, stop, **kwargs)
+            return list(self._ask_remote_sse(prompt, stop, **kwargs))
 
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, _func)
+        results = await loop.run_in_executor(None, _func)
+        for obj in results:
+            yield obj
 
     # 获得模型调用参数
     def get_model_kwargs(self):
@@ -233,8 +235,10 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
                     print("no choices")
                     continue
                 choice = response["choices"][0]
+                delta = choice["delta"]
+                delta.update({"id": response["id"]})
                 message_chunk = convert_delta_to_message_chunk(
-                    choice["delta"], default_chunk_class
+                    delta, default_chunk_class
                 )
                 generation_info = {}
                 if finish_reason := choice.get("finish_reason"):
@@ -268,8 +272,10 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
             if len(response["choices"]) == 0:
                 continue
             choice = response["choices"][0]
+            delta = choice["delta"]
+            delta.update({"id": response["id"]})
             chunk = convert_delta_to_message_chunk(
-                choice["delta"], default_chunk_class
+                delta, default_chunk_class
             )
             generation_info = {}
             if finish_reason := choice.get("finish_reason"):
