@@ -1,7 +1,8 @@
 
 from ._client import ZhipuAI
-from .chat import ChatZhipuAI
-from .knowledge.base import ZhipuAIKnowledge
+# from .chat import ChatZhipuAI
+from .http.manager import KnowledgeManagerZhipuAI
+from .http.chat import ChatZhipuAI, KnowledgeChatZhipuAI
 from .embeddings import ZhipuAIEmbeddings
 from .utils import convert_to_retrieval_tool, convert_to_web_search_tool
 
