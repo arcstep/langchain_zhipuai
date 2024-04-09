@@ -63,10 +63,6 @@ class RestAPI(BaseModel):
         data = kwargs if files else json.dumps(kwargs)
         
         response = self.session.post(url, headers=headers, data=data, files=files)
-        print(url)
-        print(headers)
-        print(data)
-        print(response)
 
         obj = json.loads(response.text)
         if obj["code"] == 200:
@@ -81,54 +77,19 @@ class RestAPI(BaseModel):
         headers = self._generate_headers()
         data = json.dumps(kwargs)
 
-        # 尝试发送请求，如果发生 SSLError 异常，重试请求
-        print(url)
-        print(headers)
-        print(data)
-        
+        # 尝试发送请求，如果发生 SSLError 异常，重试请求        
         for _ in range(3):
             try:
                 response = self.session.post(url, headers=headers, data=data, stream=True)
+                return response
                 break
             except SSLError:
                 continue
         else:
             raise Exception("Max retries exceeded with SSLError")
 
-        # 检查响应的状态码
-        print(response)
-        
         if response.status_code != 200:
             raise Exception(f"Request failed with status {response.status_code}")
-        
-        # 使用 iter_lines 方法处理 SSE 响应
-        current_id = None
-        for line in response.iter_lines():
-            if line:  # 过滤掉心跳信号（即空行）
-                line_utf8 = line.decode('utf-8')
-
-                # 如果这一行是一个事件，忽略它
-                if line_utf8.startswith("event:"):
-                    continue
-
-                # 如果这一行是一个 ID，更新当前的 ID
-                elif line_utf8.startswith("id:"):
-                    current_id = line[3:]
-
-                # 如果这一行是数据，立即返回结果
-                elif line_utf8.startswith("data:"):
-                    yield ({
-                        "id": "",
-                        "choices": [
-                            {
-                                "delta": {
-                                    "text": line_utf8[5:],
-                                    "finish_reason": "sse-chunk",
-                                    "request_id": current_id
-                                }
-                            }
-                        ]
-                    })
 
     def action_put(self, request: str, **kwargs):
         """PUT"""
