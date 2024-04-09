@@ -24,10 +24,9 @@ from typing import (
 
 from abc import ABC, abstractmethod
 
-# async
 import asyncio
-
 import tiktoken
+import inspect
 
 # all message types
 from langchain_core.messages import (
@@ -48,6 +47,13 @@ from langchain_core.messages import (
 )
 
 from .api import RestAPI
+
+def get_all_attributes(obj):
+    attrs = {}
+    for cls in inspect.getmro(obj.__class__):
+        attrs.update(vars(cls))
+    attrs.update(vars(obj))  # 实例属性覆盖类属性
+    return attrs
 
 def convert_delta_to_message_chunk(
     _dict: Mapping[str, Any], default_class: Type[BaseMessageChunk]
@@ -158,7 +164,8 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
     # 获得模型调用参数
     def get_model_kwargs(self):
         params = {}
-        for attr, value in self.__dict__.items():
+        attrs = get_all_attributes(self)
+        for attr, value in attrs.items():
             if attr in self.__class__.filter_model_kwargs() and value is not None:
                 params[attr] = value
         return params
@@ -217,26 +224,33 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         prompt = [convert_message_to_dict(message) for message in messages]
 
         default_chunk_class = AIMessageChunk
-        for response in _ask_remote_sse(prompt, stop, **kwargs):                
-            if not isinstance(response, dict):
-                response = response.dict()
-            if len(response["choices"]) == 0:
-                continue
-            choice = response["choices"][0]
-            chunk = convert_delta_to_message_chunk(
-                choice["delta"], default_chunk_class
-            )
-            generation_info = {}
-            if finish_reason := choice.get("finish_reason"):
-                generation_info["finish_reason"] = finish_reason
-            default_chunk_class = chunk.__class__
-            chunk = ChatGenerationChunk(
-                message=chunk, generation_info=generation_info or None
-            )
-            if run_manager:
-                run_manager.on_llm_new_token(chunk.text, chunk=chunk)
-            yield chunk
-
+        try:
+            for response in self._ask_remote_sse(prompt, stop, **kwargs): 
+                # print(response)
+                if not isinstance(response, dict):
+                    response = response.dict()
+                if "choices" not in response or len(response["choices"]) == 0:
+                    print("no choices")
+                    continue
+                choice = response["choices"][0]
+                message_chunk = convert_delta_to_message_chunk(
+                    choice["delta"], default_chunk_class
+                )
+                generation_info = {}
+                if finish_reason := choice.get("finish_reason"):
+                    generation_info["finish_reason"] = finish_reason
+                default_chunk_class = message_chunk.__class__
+                chunk = ChatGenerationChunk(
+                    message=message_chunk, generation_info=generation_info or None
+                )
+                # print(chunk)
+                if run_manager is not None:
+                    run_manager.on_llm_new_token(chunk.text, chunk=chunk)
+                yield chunk
+        except Exception as e:
+            # 处理错误
+            print(f"Error: {e}")
+            
     async def _astream(
         self,
         messages: List[BaseMessage],
@@ -248,7 +262,7 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         prompt = [convert_message_to_dict(message) for message in messages]
 
         default_chunk_class = AIMessageChunk
-        async for response in _ask_aremote_sse(prompt, stop, **kwargs):
+        async for response in self._ask_aremote_sse(prompt, stop, **kwargs):
             if not isinstance(response, dict):
                 response = response.dict()
             if len(response["choices"]) == 0:

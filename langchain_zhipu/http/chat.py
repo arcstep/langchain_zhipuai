@@ -8,6 +8,8 @@ from typing import (
 
 from .base import BaseChatZhipuAI
 
+import time
+
 class ChatZhipuAI(BaseChatZhipuAI):
     """支持最新的智谱API"""
 
@@ -86,34 +88,29 @@ class ChatZhipuAI(BaseChatZhipuAI):
         ]
 
     def _ask_remote(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
-        # 构造参数序列
         params = self.get_model_kwargs()
         params.update(kwargs)
         params.update({"stream": False})
         if stop is not None:
             params.update({"stop": stop})
     
-        # 调用模型
-        return self.client.chat.completions.create(
-            messages=prompt,
-            **params
-        )
+        reply = self.client.action_post(request=f"api/paas/v4/chat/completions", **params)
+        
+        return reply
 
     def _ask_remote_sse(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
-        # 构造参数序列
         params = self.get_model_kwargs()
         params.update(kwargs)
         params.update({"stream": True})
         if stop is not None:
             params.update({"stop": stop})
     
-        # 调用模型
-        return self.client.chat.completions.create(
-            messages=prompt,
-            **params
-        )
+        replies = self.client.action_sse_post(request=f"api/paas/v4/chat/completions", **params)
+        
+        for reply in replies:
+            yield reply
 
-class KnowledgeChatZhipuAI(BaseChatZhipuAI):
+class KnowledgeChatZhipuAI(ChatZhipuAI):
     """
     支持V4版本智谱AI的云服务中知识库能力的对话应用。
     """
@@ -121,17 +118,94 @@ class KnowledgeChatZhipuAI(BaseChatZhipuAI):
     application_id: str = None
     """基于在线知识库的大模型应用ID"""
     
-    model: str = Field(default="glm-4")
-    """所要调用的模型编码"""
+    incremental = True
+    """incremental为True时，流式输出时是否按增量输出，否则按全量输出"""
+    
+    @classmethod
+    def filter_model_kwargs(cls):
+        """
+        ZhipuAI在调用时只接受这些参数。
+        """
+        return [
+            "model",
+            "request_id",
+            "do_sample",
+            "temperature",
+            "top_p",
+            "max_tokens",
+            "stop",
+            "incremental",
+        ]
+
+    @root_validator()
+    def raise_invalid_params(cls, values: Dict) -> Dict:
+        if values["application_id"] is None:
+            raise Exception("MUST supply application_id")
+        return values
 
     def _ask_remote(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
-        params = {"prompt": prompt, "stop": stop, **kwargs}
-        response = self.client.action_post(request=f"/api/llm-application/open/model-api/{self.application_id}/invoke", **params)
+        params = self.get_model_kwargs()
+        # print(params)
+        params.update({"prompt": prompt, **kwargs})
+        if stop is not None:
+            params.update({"stop": stop})
+
+        reply = self.client.action_post(request=f"api/llm-application/open/model-api/{self.application_id}/invoke", **params)
         
-        return [response]
+        return ({
+            "id": reply["data"]["requestId"],
+            "created": int(reply["timestamp"] / 1000),
+            "model": self.model,
+            "usage": {},
+            "choices": [{
+                "index": 0,
+                "finish_reason": "stop",
+                "message": {
+                    "role": "assistant",
+                    "content": reply["data"]["content"],
+                },
+            }],
+        })
 
     def _ask_remote_sse(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
-        params = {"prompt": prompt, "stop": stop, "incremental": incremental, **kwargs}
-        response = self.client.action_sse_post(request=f"/api/llm-application/open/model-api/{self.application_id}/sse-invoke", **params)
+        params = self.get_model_kwargs()
+        # print(params)
+        params.update({"prompt": prompt, **kwargs})
+        if stop is not None:
+            params.update({"stop": stop})
 
-        return [response]
+        replies = self.client.action_sse_post(request=f"api/llm-application/open/model-api/{self.application_id}/sse-invoke", **params)
+
+        # 使用 iter_lines 方法处理 SSE 响应
+        current_id = None
+        for line in replies.iter_lines():
+            if line:  # 过滤掉心跳信号（即空行）
+                line_utf8 = line.decode('utf-8')
+
+                # 如果这一行是一个事件，忽略它
+                if line_utf8.startswith("event:"):
+                    continue
+
+                # 如果这一行是一个 ID，更新当前的 ID
+                elif line_utf8.startswith("id:"):
+                    current_id = line[3:]
+
+                # 如果这一行是数据，立即返回结果
+                elif line_utf8.startswith("data:"):
+                    id = current_id
+                    text = line_utf8[5:]
+                    if id is not None and text is not None:
+                        yield {
+                            "id": id,
+                            "created": int(time.time()),
+                            "model": self.model,
+                            "usage": {},
+                            "choices": [{
+                                "index": 0,
+                                "finish_reason": "stop",
+                                "delta": {
+                                    "role": "assistant",
+                                    "content": text,
+                                },
+                            }],
+                        }
