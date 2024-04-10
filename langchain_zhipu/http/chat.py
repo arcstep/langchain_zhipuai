@@ -14,9 +14,6 @@ import json
 class ChatZhipuAI(BaseChatZhipuAI):
     """支持最新的智谱API"""
 
-    model: str = Field(default="glm-4")
-    """所要调用的模型编码"""
-
     request_id: Optional[str] = None
     """
     由用户端传参，需保证唯一性；用于区分每次请求的唯一标识，用户端不传时平台会默认生成。
@@ -207,13 +204,25 @@ class KnowledgeChatZhipuAI(ChatZhipuAI):
                             "id": id,
                             "created": int(time.time()),
                             "model": self.model,
-                            "usage": {},
                             "choices": [{
                                 "index": 0,
-                                "finish_reason": "stop",
                                 "delta": {
                                     "role": "assistant",
                                     "content": text,
                                 },
                             }],
                         }
+        yield {
+            "id": current_id,
+            "created": int(time.time()),
+            "model": self.model,
+            "usage": {},
+            "choices": [{
+                "index": 0,
+                "finish_reason": "stop",
+                "delta": {
+                    "role": "assistant",
+                    "content": "",
+                },
+            }],
+        }

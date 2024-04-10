@@ -123,6 +123,9 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
     client: Any = None
     """访问智谱AI的客户端"""
 
+    model: str = Field(default="glm-4")
+    """所要调用的模型编码"""
+
     base_url: str = None
     """访问智谱AI的服务器地址"""
 
@@ -195,10 +198,12 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         response = self._ask_remote(prompt, stop, **kwargs)
 
         generations = []
+        id = response.get("id")
         if not isinstance(response, dict):
             response = response.dict()
         for res in response["choices"]:
-            message = convert_dict_to_message(res["message"])
+            message_dict = res["message"]
+            message = convert_dict_to_message(message_dict)
             generation_info = dict(finish_reason=res.get("finish_reason"))
             gen = ChatGeneration(
                 message=message,
@@ -207,7 +212,7 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
             generations.append(gen)
         token_usage = response.get("usage", {})
         llm_output = {
-            "id": response.get("id"),
+            "id": id,
             "created": response.get("created"),
             "token_usage": token_usage,
             "model_name": self.model,
@@ -243,6 +248,8 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
                 generation_info = {}
                 if finish_reason := choice.get("finish_reason"):
                     generation_info["finish_reason"] = finish_reason
+                if usage := choice.get("usage"):
+                    generation_info["usage"] = usage
                 default_chunk_class = message_chunk.__class__
                 chunk = ChatGenerationChunk(
                     message=message_chunk, generation_info=generation_info or None
@@ -287,6 +294,27 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
             if run_manager:
                 await run_manager.on_llm_new_token(chunk.text, chunk=chunk)
             yield chunk
+            
+    def _combine_llm_outputs(self, llm_outputs: List[Optional[dict]]) -> dict:
+            overall_token_usage: dict = {}
+            system_fingerprint = None
+            for output in llm_outputs:
+                if output is None:
+                    # Happens in streaming
+                    continue
+                token_usage = output["token_usage"]
+                if token_usage is not None:
+                    for k, v in token_usage.items():
+                        if k in overall_token_usage:
+                            overall_token_usage[k] += v
+                        else:
+                            overall_token_usage[k] = v
+                if system_fingerprint is None:
+                    system_fingerprint = output.get("system_fingerprint")
+            combined = {"token_usage": overall_token_usage, "model_name": self.model}
+            if system_fingerprint:
+                combined["system_fingerprint"] = system_fingerprint
+            return combined
 
     def get_token_ids(self, text: str) -> List[int]:
         """Get the token IDs using the tiktoken package."""
