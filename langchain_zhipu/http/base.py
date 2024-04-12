@@ -1,5 +1,13 @@
+from langchain_core.language_models.base import LanguageModelInput
+from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables.config import ensure_config, run_in_executor
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult, LLMResult
+from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
+from langchain_core.load import dumpd, dumps
+
 from langchain_core.callbacks import (
     AsyncCallbackManagerForLLMRun,
+    CallbackManager,
     CallbackManagerForLLMRun,
 )
 
@@ -12,9 +20,6 @@ from langchain_community.adapters.openai import (
     convert_message_to_dict,
     convert_dict_to_message,    
 )
-
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
-from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
 
 # common types
 from typing import (
@@ -89,6 +94,13 @@ def convert_delta_to_message_chunk(
     else:
         return default_class(content=content, id=id_)  # type: ignore
 
+def _gen_info_and_msg_metadata(
+    generation: Union[ChatGeneration, ChatGenerationChunk],
+) -> dict:
+    return {
+        **(generation.generation_info or {}),
+        **getattr(generation.message, 'response_metadata', {}),
+    }
 
 class BaseChatZhipuAI(BaseChatModel, ABC):
     @property
@@ -237,7 +249,6 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
                 if not isinstance(response, dict):
                     response = response.dict()
                 if "choices" not in response or len(response["choices"]) == 0:
-                    print("no choices")
                     continue
                 choice = response["choices"][0]
                 delta = choice["delta"]
@@ -245,14 +256,20 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
                 message_chunk = convert_delta_to_message_chunk(
                     delta, default_chunk_class
                 )
-                generation_info = {}
+                
+                generation_info = {
+                    "model": response["model"],
+                    "created": response["created"],
+                    "index": choice["index"],
+                }
                 if finish_reason := choice.get("finish_reason"):
                     generation_info["finish_reason"] = finish_reason
-                if usage := choice.get("usage"):
+                if usage := response.get("usage"):
                     generation_info["usage"] = usage
                 default_chunk_class = message_chunk.__class__
                 chunk = ChatGenerationChunk(
-                    message=message_chunk, generation_info=generation_info or None
+                    message=message_chunk,
+                    generation_info=generation_info,
                 )
                 # print(chunk)
                 if run_manager is not None:
@@ -276,45 +293,32 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         async for response in self._ask_aremote_sse(prompt, stop, **kwargs):
             if not isinstance(response, dict):
                 response = response.dict()
-            if len(response["choices"]) == 0:
+            if "choices" not in response or len(response["choices"]) == 0:
                 continue
             choice = response["choices"][0]
             delta = choice["delta"]
             delta.update({"id": response["id"]})
-            chunk = convert_delta_to_message_chunk(
+            message_chunk = convert_delta_to_message_chunk(
                 delta, default_chunk_class
             )
-            generation_info = {}
+            
+            generation_info = {
+                "model": response["model"],
+                "created": response["created"],
+                "index": choice["index"],
+            }
             if finish_reason := choice.get("finish_reason"):
                 generation_info["finish_reason"] = finish_reason
-            default_chunk_class = chunk.__class__
+            if usage := response.get("usage"):
+                generation_info["usage"] = usage
+            default_chunk_class = message_chunk.__class__
             chunk = ChatGenerationChunk(
-                message=chunk, generation_info=generation_info or None
+                message=message_chunk,
+                generation_info=generation_info,
             )
             if run_manager:
                 await run_manager.on_llm_new_token(chunk.text, chunk=chunk)
             yield chunk
-            
-    def _combine_llm_outputs(self, llm_outputs: List[Optional[dict]]) -> dict:
-            overall_token_usage: dict = {}
-            system_fingerprint = None
-            for output in llm_outputs:
-                if output is None:
-                    # Happens in streaming
-                    continue
-                token_usage = output["token_usage"]
-                if token_usage is not None:
-                    for k, v in token_usage.items():
-                        if k in overall_token_usage:
-                            overall_token_usage[k] += v
-                        else:
-                            overall_token_usage[k] = v
-                if system_fingerprint is None:
-                    system_fingerprint = output.get("system_fingerprint")
-            combined = {"token_usage": overall_token_usage, "model_name": self.model}
-            if system_fingerprint:
-                combined["system_fingerprint"] = system_fingerprint
-            return combined
 
     def get_token_ids(self, text: str) -> List[int]:
         """Get the token IDs using the tiktoken package."""
@@ -325,3 +329,66 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
             allowed_special=self.allowed_special,
             disallowed_special=self.disallowed_special,
         )
+
+    # def stream(
+    #     self,
+    #     input: LanguageModelInput,
+    #     config: Optional[RunnableConfig] = None,
+    #     *,
+    #     stop: Optional[List[str]] = None,
+    #     **kwargs: Any,
+    # ) -> Iterator[BaseMessageChunk]:
+    #     """
+    #     重定义stream，以便支持流式输出时的token统计。
+    #     """
+    #     config = ensure_config(config)
+    #     messages = self._convert_input(input).to_messages()
+    #     params = self._get_invocation_params(stop=stop, **kwargs)
+    #     options = {"stop": stop, **kwargs}
+    #     callback_manager = CallbackManager.configure(
+    #         config.get("callbacks"),
+    #         self.callbacks,
+    #         self.verbose,
+    #         config.get("tags"),
+    #         self.tags,
+    #         config.get("metadata"),
+    #         self.metadata,
+    #     )
+    #     (run_manager,) = callback_manager.on_chat_model_start(
+    #         dumpd(self),
+    #         [messages],
+    #         invocation_params=params,
+    #         options=options,
+    #         name=config.get("run_name"),
+    #         # run_id=config.pop("run_id", None),
+    #         batch_size=1,
+    #     )
+    #     generation: Optional[ChatGenerationChunk] = None
+    #     llm_output = {}
+    #     try:
+    #         for chunk in self._stream(
+    #             messages, stop=stop, run_manager=run_manager, **kwargs
+    #         ):
+    #             # chunk.message.response_metadata = _gen_info_and_msg_metadata(chunk)
+    #             yield chunk.message
+                
+    #             if generation is None:
+    #                 generation = chunk
+    #             else:
+    #                 generation += chunk
+    #             if hasattr(chunk, 'generation_info') and chunk.generation_info:
+    #                 llm_output.update(chunk.generation_info)
+    #         assert generation is not None
+    #     except BaseException as e:
+    #         run_manager.on_llm_error(
+    #             e,
+    #             response=LLMResult(
+    #                 generations=[[generation]] if generation else []
+    #             ),
+    #         )
+    #         raise e
+    #     else:
+    #         run_manager.on_llm_end(LLMResult(
+    #             generations=[[generation]],
+    #             llm_output=llm_output
+    #         ))
