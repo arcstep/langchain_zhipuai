@@ -1,7 +1,7 @@
 # 为什么要开发这个包？
 [![PyPI version](https://img.shields.io/pypi/v/langchain_zhipu.svg)](https://pypi.org/project/langchain_zhipu/)
 
-为了方便在 langchain 中使用，在官方SDK基础上做了如下额外工作：
+为了方便在 langchain 中使用，langchain_zhipu 直接使用官方HTTP接口实现，并避免了如下的现存问题：
 
 - 问题1: 智谱AI的官方SDK使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
 - 问题2: langchain.community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
@@ -21,8 +21,9 @@
 
 - 已支持生成模型："glm-3-turbo", "glm-4", "glm-4v"
 - 已支持向量模型："embedding-2"
-- 逻辑推理和对话生成
-- 支持工具回调
+- 已支持官方知识库管理能力：对知识库、文档、应用做增删改查
+- 已支持基于官方知识库的大模型对话
+- 支持工具回调：普通工具，以及在线知识库和网络搜索
 - 支持智能体
 - 支持RAG
 
