@@ -92,18 +92,21 @@ class ChatZhipuAI(BaseChatZhipuAI):
         if stop is not None:
             params.update({"stop": stop})
     
-        reply = self.client.complete(request=f"api/paas/v4/chat/completions", **params)
+        reply = self.client.action_post(request=f"api/paas/v4/chat/completions", **params)
         
         return reply
 
     def _ask_remote_sse(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
+        """
+        这是V4版本的SSE接口解析，与V3差异较大。
+        """
         params = self.get_model_kwargs()
         params.update({"messages": prompt, **kwargs})
         params.update({"stream": True})
         if stop is not None:
             params.update({"stop": stop})
     
-        replies = self.client.complete_sse(request=f"api/paas/v4/chat/completions", **params)
+        replies = self.client.action_sse_post(request=f"api/paas/v4/chat/completions", **params)
         
         for line in replies.iter_lines():
             if line:  # 过滤掉心跳信号（即空行）
@@ -173,6 +176,9 @@ class KnowledgeChatZhipuAI(ChatZhipuAI):
         })
 
     def _ask_remote_sse(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
+        """
+        这是V3版本的SSE接口解析。
+        """
         params = self.get_model_kwargs()
         # print(params)
         params.update({"prompt": prompt, **kwargs})
