@@ -31,14 +31,14 @@
 
 # 使用
 
-## 使用参考
+## 代码例子
 
-- [基本用法 usage.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/usage.ipynb)
-- [智能体 agent.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/agent.ipynb)
-- [向量模型 embedding.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/embedding.ipynb)
-- [模型统计 tokens.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/tokens.ipynb)
-- [知识库 knowledge.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/knowledge.ipynb)
-- [知识库应用 knowledge_app.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/knowledge_app.ipynb)
+- [基本用法 usage.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/usage.ipynb)
+- [智能体 agent.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/agent.ipynb)
+- [向量模型 embedding.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/embedding.ipynb)
+- [模型统计 tokens.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/tokens.ipynb)
+- [知识库 knowledge.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/knowledge.ipynb)
+- [知识库应用 knowledge_app.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/knowledge_app.ipynb)
 - [langchain_chinese](https://github.com/arcstep/langchain_chinese)
 
 ------------------------------------------
