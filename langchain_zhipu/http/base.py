@@ -243,40 +243,34 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         prompt = [convert_message_to_dict(message) for message in messages]
 
         default_chunk_class = AIMessageChunk
-        try:
-            for response in self._ask_remote_sse(prompt, stop, **kwargs): 
-                # print(response)
-                if not isinstance(response, dict):
-                    response = response.dict()
-                if "choices" not in response or len(response["choices"]) == 0:
-                    continue
-                choice = response["choices"][0]
-                delta = choice["delta"]
-                delta.update({"id": response["id"]})
-                message_chunk = convert_delta_to_message_chunk(
-                    delta, default_chunk_class
-                )
-                
-                generation_info = {}
-                if finish_reason := choice.get("finish_reason"):
-                    generation_info["finish_reason"] = finish_reason
-                    generation_info["model"] = response["model"]
-                    generation_info["created"] = response["created"]
-                    generation_info["index"] = choice["index"]
-                if usage := response.get("usage"):
-                    generation_info["usage"] = usage
-                default_chunk_class = message_chunk.__class__
-                chunk = ChatGenerationChunk(
-                    message=message_chunk,
-                    generation_info=generation_info,
-                )
-                # print(chunk)
-                if run_manager is not None:
-                    run_manager.on_llm_new_token(chunk.text, chunk=chunk)
-                yield chunk
-        except Exception as e:
-            # 处理错误
-            print(f"Error: {e}")
+        for response in self._ask_remote_sse(prompt, stop, **kwargs): 
+            if not isinstance(response, dict):
+                response = response.dict()
+            if "choices" not in response or len(response["choices"]) == 0:
+                continue
+            choice = response["choices"][0]
+            delta = choice["delta"]
+            delta.update({"id": response["id"]})
+            message_chunk = convert_delta_to_message_chunk(
+                delta, default_chunk_class
+            )
+            
+            generation_info = {}
+            if finish_reason := choice.get("finish_reason"):
+                generation_info["finish_reason"] = finish_reason
+                generation_info["model"] = response["model"]
+                generation_info["created"] = response["created"]
+                generation_info["index"] = choice["index"]
+            if usage := response.get("usage"):
+                generation_info["usage"] = usage
+            default_chunk_class = message_chunk.__class__
+            chunk = ChatGenerationChunk(
+                message=message_chunk,
+                generation_info=generation_info,
+            )
+            if run_manager is not None:
+                run_manager.on_llm_new_token(chunk.text, chunk=chunk)
+            yield chunk
             
     async def _astream(
         self,

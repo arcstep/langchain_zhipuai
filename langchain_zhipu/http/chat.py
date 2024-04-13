@@ -153,13 +153,11 @@ class KnowledgeChatZhipuAI(ChatZhipuAI):
 
     def _ask_remote(self, prompt: Any, stop: Optional[List[str]] = None, **kwargs):
         params = self.get_model_kwargs()
-        # print(params)
         params.update({"prompt": prompt, **kwargs})
         if stop is not None:
             params.update({"stop": stop})
 
         reply = self.client.action_post(request=f"api/llm-application/open/model-api/{self.application_id}/invoke", **params)
-        print(reply)
         
         return ({
             "id": reply["data"]["requestId"],
@@ -181,7 +179,6 @@ class KnowledgeChatZhipuAI(ChatZhipuAI):
         这是V3版本的SSE接口解析。
         """
         params = self.get_model_kwargs()
-        # print(params)
         params.update({"prompt": prompt, **kwargs})
         if stop is not None:
             params.update({"stop": stop})
