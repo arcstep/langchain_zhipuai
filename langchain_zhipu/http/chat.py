@@ -159,6 +159,7 @@ class KnowledgeChatZhipuAI(ChatZhipuAI):
             params.update({"stop": stop})
 
         reply = self.client.action_post(request=f"api/llm-application/open/model-api/{self.application_id}/invoke", **params)
+        print(reply)
         
         return ({
             "id": reply["data"]["requestId"],

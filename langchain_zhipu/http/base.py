@@ -257,13 +257,12 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
                     delta, default_chunk_class
                 )
                 
-                generation_info = {
-                    "model": response["model"],
-                    "created": response["created"],
-                    "index": choice["index"],
-                }
+                generation_info = {}
                 if finish_reason := choice.get("finish_reason"):
                     generation_info["finish_reason"] = finish_reason
+                    generation_info["model"] = response["model"]
+                    generation_info["created"] = response["created"]
+                    generation_info["index"] = choice["index"]
                 if usage := response.get("usage"):
                     generation_info["usage"] = usage
                 default_chunk_class = message_chunk.__class__
@@ -302,13 +301,12 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
                 delta, default_chunk_class
             )
             
-            generation_info = {
-                "model": response["model"],
-                "created": response["created"],
-                "index": choice["index"],
-            }
+            generation_info = {}
             if finish_reason := choice.get("finish_reason"):
                 generation_info["finish_reason"] = finish_reason
+                generation_info["model"] = response["model"]
+                generation_info["created"] = response["created"]
+                generation_info["index"] = choice["index"]
             if usage := response.get("usage"):
                 generation_info["usage"] = usage
             default_chunk_class = message_chunk.__class__
