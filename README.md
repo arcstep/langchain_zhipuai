@@ -6,7 +6,9 @@
 - 问题1: 智谱AI的官方SDK使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
 - 问题2: langchain.community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
 
-# 已支持全部 langchain 接口
+# 能力支持
+
+## 已支持全部 langchain 接口
 
 1. invoke
 2. ainvoke
@@ -17,7 +19,7 @@
 7. astream_events
 8. asteram_log
 
-# 已支持模型能力
+## 已支持模型能力
 
 - 已支持生成模型："glm-3-turbo", "glm-4", "glm-4v"
 - 已支持向量模型："embedding-2"
@@ -28,6 +30,20 @@
 - 支持RAG
 
 # 使用
+
+## 使用参考
+
+- [基本用法 usage.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/usage.ipynb)
+- [智能体 agent.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/agent.ipynb)
+- [向量模型 embedding.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/embedding.ipynb)
+- [模型统计 tokens.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/tokens.ipynb)
+- [知识库 knowledge.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/knowledge.ipynb)
+- [知识库应用 knowledge_app.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/knowledge_app.ipynb)
+- [langchain_chinese](https://github.com/arcstep/langchain_chinese)
+
+------------------------------------------
+
+**官方接口指南** 智谱[开放平台](https://open.bigmodel.cn/dev/api)
 
 ## 简单的例子
 
@@ -101,16 +117,3 @@ prompt = ChatPromptTemplate.from_messages([
 (prompt|llm4v).invoke({})
 ```
 
-## 智能体
-
-请查看 [agent.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/agent.ipynb)
-
-# 更多用法
-
-请参考 [langchain_chinese](https://github.com/arcstep/langchain_chinese)
-
-------------------------------------------
-
-**官方接口指南** 智谱[开放平台](https://open.bigmodel.cn/dev/api)大模型接口 Python SDK（Big Model API SDK in Python），让开发者更便捷的调用智谱开放API
-
-**官方SDK** [![PyPI version](https://img.shields.io/pypi/v/zhipuai.svg)](https://pypi.org/project/zhipuai/)
