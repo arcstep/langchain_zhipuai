@@ -51,7 +51,7 @@ class RestAPI(BaseModel):
         if obj["code"] == 200:
             return obj
         else:
-            raise Exception(obj)
+            raise BasicException(obj)
 
     def action_post(self, request: str, files=None, **kwargs):
         """POST"""
@@ -65,11 +65,15 @@ class RestAPI(BaseModel):
 
         if response.status_code == 200:
             if response.text:
-                return response.json()
+                resp = response.json()
+                if "code" in resp and resp["code"] != 200:
+                    raise BaseException(resp)
+                else:
+                    return resp
             else:
                 return {}
         else:
-            raise Exception({
+            raise BaseException({
                 "status_code": response.status_code,
                 "headers": response.headers,
                 "text": response.text,
@@ -89,10 +93,10 @@ class RestAPI(BaseModel):
             except SSLError:
                 continue
         else:
-            raise Exception("Max retries exceeded with SSLError")
+            raise BasicException("Max retries exceeded with SSLError")
 
         if response.status_code != 200:
-            raise Exception({
+            raise BasicException({
                 "status_code": response.status_code,
                 "headers": response.headers,
                 "text": response.text,
@@ -108,7 +112,7 @@ class RestAPI(BaseModel):
         if response.status_code == 200:
             return response.json()
         else:
-            raise Exception({
+            raise BasicException({
                 "status_code": response.status_code,
                 "headers": response.headers,
                 "text": response.text,
@@ -124,7 +128,7 @@ class RestAPI(BaseModel):
         if response.status_code == 200:
             return response.json()
         else:
-            raise Exception({
+            raise BasicException({
                 "status_code": response.status_code,
                 "headers": response.headers,
                 "text": response.text,
@@ -140,8 +144,8 @@ class RestAPI(BaseModel):
     def _generate_token(self) -> str:
         try:
             id, secret = self.api_key.split(".")
-        except Exception as e:
-            raise Exception("invalid apikey", e)
+        except BasicException as e:
+            raise BasicException("invalid apikey", e)
 
         payload = {
             "api_key": id,
