@@ -47,6 +47,22 @@ pip install dotenv
 ZHIPUAI_API_KEY="你的KEY"
 ```
 
+然后在你的代码目录中：
+
+```python
+# 加载 .env 到环境变量
+import os
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(), override=True)
+```
+
+## 安装 langchain_zhipu
+
+```bash
+pip install langchain langchain_zhipu
+```
+
+其中，langchain 只要 `v0.1.0` ，而 langchain_zhipu 最好安装最新的 4.1.x 版本。
 
 ## 代码例子
 
