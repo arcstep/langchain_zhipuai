@@ -31,6 +31,23 @@
 
 # 使用
 
+## 配置
+
+可以将申请到的 `API_KEY` 配置到环境变量 `ZHIPUAI_API_KEY`。
+
+建议使用 `.env` 文件来管理环境变量，这可能安装 `dotenv` 包：
+
+```bash
+pip install dotenv
+```
+
+你的 .env 文件：
+
+```
+ZHIPUAI_API_KEY="你的KEY"
+```
+
+
 ## 代码例子
 
 - [基本用法 usage.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/usage.ipynb)
