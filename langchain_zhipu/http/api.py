@@ -49,39 +49,33 @@ class RestAPI(BaseModel):
         
         url = f'{self.base_url}/{request}'
         headers = self._generate_headers()
-        response = self.session.get(url, headers=headers, params=kwargs)
-        
+
+        response = self._retry_request(self.session.get, url, headers=headers, params=kwargs)
+
         obj = json.loads(response.text)
         if obj["code"] == 200:
             return obj
         else:
-            raise BasicException(obj)
+            raise BaseException(obj)        
 
     def action_post(self, request: str, files=None, **kwargs):
         """POST"""
         
         url = f'{self.base_url}/{request}'
         headers = self._generate_headers(files)
-        
         # 如果提供了 files 参数就需要将 kwargs 视作表单来处理
         data = kwargs if files else json.dumps(kwargs)
-        response = self.session.post(url, headers=headers, data=data, files=files)
 
-        if response.status_code == 200:
-            if response.text:
-                resp = response.json()
-                if "code" in resp and resp["code"] != 200:
-                    raise BaseException(resp)
-                else:
-                    return resp
+        response = self._retry_request(self.session.post, url, headers=headers, data=data, files=files)
+
+        if response.text:
+            resp = response.json()
+            if "code" in resp and resp["code"] != 200:
+                raise BaseException(resp)
             else:
-                return {}
+                return resp
         else:
-            raise BaseException({
-                "status_code": response.status_code,
-                "headers": response.headers,
-                "text": response.text,
-            })
+            return {}
     
     def action_sse_post(self, request: str, **kwargs):
         """POST for SSE"""
@@ -90,37 +84,18 @@ class RestAPI(BaseModel):
         headers = self._generate_headers()
         data = json.dumps(kwargs)
 
-        # 尝试发送请求，如果发生 SSLError 异常，重试请求        
-        for _ in range(3):
-            try:
-                return self.session.post(url, headers=headers, data=data, stream=True)
-            except SSLError:
-                continue
-        else:
-            raise BasicException("Max retries exceeded with SSLError")
-
-        if response.status_code != 200:
-            raise BasicException({
-                "status_code": response.status_code,
-                "headers": response.headers,
-                "text": response.text,
-            })
+        response =  self._retry_request(self.session.post, url, headers=headers, data=data, stream=True)
+        return response
 
     def action_put(self, request: str, **kwargs):
         """PUT"""
         
         url = f'{self.base_url}/{request}'
         headers = self._generate_headers()
-        response = self.session.put(url, headers=headers, data=json.dumps(kwargs))
+        data = json.dumps(kwargs)
         
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise BasicException({
-                "status_code": response.status_code,
-                "headers": response.headers,
-                "text": response.text,
-            })
+        response = self._retry_request(self.session.put, url, headers=headers, data=data)
+        return response.json()
 
     def action_delete(self, request: str):
         """DELETE"""
@@ -129,14 +104,8 @@ class RestAPI(BaseModel):
         headers = self._generate_headers()
         response = self.session.delete(url, headers=headers)
         
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise BasicException({
-                "status_code": response.status_code,
-                "headers": response.headers,
-                "text": response.text,
-            })
+        response = self._retry_request(self.session.delete, url, headers=headers)
+        return response.json()
         
     def _generate_headers(self, files = None) -> dict:
         headers = {
@@ -145,12 +114,13 @@ class RestAPI(BaseModel):
         }
         return headers
 
+    # 优先使用60秒内调用过的缓存
     @cachetools.func.ttl_cache(maxsize=10, ttl=60)
     def _generate_token(self) -> str:
         try:
             id, secret = self.api_key.split(".")
-        except BasicException as e:
-            raise BasicException("invalid apikey", e)
+        except Exception as e:
+            raise BaseException("Invalid ZHIPUAI_API_KEY", e)
 
         payload = {
             "api_key": id,
@@ -164,3 +134,24 @@ class RestAPI(BaseModel):
             algorithm="HS256",
             headers={"alg": "HS256", "sign_type": "SIGN"},
         )
+        
+    def _retry_request(self, func, *args, **kwargs):
+        last_exception = None
+        for _ in range(3):
+            try:
+                response = func(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                print("Retry for HTTP Error ...")
+                continue
+            else:
+                # 如果响应状态码不是 200，也引发一个异常
+                if response.status_code != 200:
+                    raise Exception({
+                        "status_code": response.status_code,
+                        "headers": response.headers,
+                        "text": response.text,
+                    })
+                return response
+        else:
+            raise last_exception
