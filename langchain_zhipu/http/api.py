@@ -1,3 +1,4 @@
+import cachetools.func
 import requests
 from requests.exceptions import SSLError
 import json
@@ -32,7 +33,10 @@ class RestAPI(BaseModel):
     """
     构造令牌的默认过期时间是600秒
     """
-    
+
+    def __hash__(self):
+        return hash((self.base_url, self.api_key, self.exp_seconds))
+
     @root_validator()
     def base_validate_environment(cls, values: Dict) -> Dict:
         values["base_url"] = init_base_url(values["base_url"])
@@ -141,6 +145,7 @@ class RestAPI(BaseModel):
         }
         return headers
 
+    @cachetools.func.ttl_cache(maxsize=10, ttl=60)
     def _generate_token(self) -> str:
         try:
             id, secret = self.api_key.split(".")
