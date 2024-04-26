@@ -122,9 +122,6 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         if self.streaming:
             attributes["streaming"] = self.streaming
 
-        if self.return_type:
-            attributes["return_type"] = self.return_type
-
         return attributes
 
     @classmethod
