@@ -35,10 +35,10 @@
 
 可以将申请到的 `API_KEY` 配置到环境变量 `ZHIPUAI_API_KEY`。
 
-建议使用 `.env` 文件来管理环境变量，这可能安装 `dotenv` 包：
+建议使用 `.env` 文件来管理环境变量，这需要安装 `python_dotenv` 包：
 
 ```bash
-pip install dotenv
+pip install python_dotenv
 ```
 
 你的 .env 文件：
