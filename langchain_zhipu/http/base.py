@@ -132,7 +132,7 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
     client: Any = None
     """访问智谱AI的客户端"""
 
-    model: str = Field(default="glm-4")
+    model: str = Field(default="glm-4-air")
     """所要调用的模型编码"""
 
     base_url: str = None
