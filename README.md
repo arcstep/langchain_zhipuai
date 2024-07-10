@@ -1,10 +1,11 @@
 # 为什么要开发这个包？
+
 [![PyPI version](https://img.shields.io/pypi/v/langchain_zhipu.svg)](https://pypi.org/project/langchain_zhipu/)
 
-为了方便在 langchain 中使用，langchain_zhipu 直接使用官方HTTP接口实现，并避免了如下的现存问题：
+为了方便在 langchain 中使用，langchain_zhipu 直接使用官方 HTTP 接口实现，并避免了如下的现存问题：
 
-- 问题1: 智谱AI的官方SDK使用了 pydantic v2，这与 langchain（尤其是langserve）不兼容
-- 问题2: langchain.community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
+- 问题 1: 智谱 AI 的官方 SDK 使用了 pydantic v2，这与 langchain（尤其是 langserve）不兼容
+- 问题 2: langchain.community 的国内包更新不及时，无法在 langchain 的 LCEL 语法中使用
 
 # 能力支持
 
@@ -27,7 +28,7 @@
 - 已支持基于官方知识库的大模型对话
 - 支持工具回调：普通工具，以及在线知识库和网络搜索
 - 支持智能体
-- 支持RAG
+- 支持 RAG
 
 # 使用
 
@@ -72,9 +73,9 @@ pip install langchain langchain_zhipu
 - [模型统计 tokens.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/tokens.ipynb)
 - [知识库 knowledge.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/knowledge.ipynb)
 - [知识库应用 knowledge_app.ipynb](https://github.com/arcstep/langchain_zhipuai/blob/main/notes/knowledge_app.ipynb)
-- [langchain_chinese](https://github.com/arcstep/langchain_chinese)
+- [textlong+智谱](https://github.com/arcstep/textlong/blob/main/notes/00%20howto/06%20%E6%99%BA%E8%B0%B1.ipynb)
 
-------------------------------------------
+---
 
 **官方接口指南** 智谱[开放平台](https://open.bigmodel.cn/dev/api)
 
@@ -124,7 +125,7 @@ def search(query: str) -> str:
 llm.bind(tools=[convert_to_openai_tool(search)]).invoke("langchain_chinese是啥？请查询本地资料回答。")
 ```
 
-## 使用glm-4v
+## 使用 glm-4v
 
 ```python
 from langchain_zhipu import ChatZhipuAI
@@ -149,4 +150,3 @@ prompt = ChatPromptTemplate.from_messages([
 
 (prompt|llm4v).invoke({})
 ```
-
