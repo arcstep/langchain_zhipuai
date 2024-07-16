@@ -4,6 +4,7 @@ from langchain_core.runnables.config import ensure_config, run_in_executor
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult, LLMResult
 from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
 from langchain_core.load import dumpd, dumps
+from langchain_core.utils.function_calling import convert_to_openai_tool
 
 from langchain_core.callbacks import (
     AsyncCallbackManagerForLLMRun,
@@ -177,12 +178,12 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
 
     # 获得模型调用参数
     def get_model_kwargs(self):
-        params = {}
         attrs = get_all_attributes(self)
-        for attr, value in attrs.items():
-            if attr in self.__class__.filter_model_kwargs() and value is not None:
-                params[attr] = value
-        return params
+        return {
+            attr: value
+            for attr, value in attrs.items()
+            if attr in self.__class__.filter_model_kwargs() and value is not None
+        }
 
     # 实现 invoke 调用方法
     def _generate(
@@ -192,7 +193,7 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         stream: Optional[bool] = None,
         **kwargs: Any,
-    ) -> ChatResult:
+    ) -> ChatResult:  # sourcery skip: avoid-builtin-shadow
         """实现 ZhiputAI 的同步调用"""
 
         # 支持根据 stream 或 streaming 生成流
@@ -318,6 +319,9 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
             allowed_special=self.allowed_special,
             disallowed_special=self.disallowed_special,
         )
+    
+    def bind_tools(self, tools: Sequence[Union[Dict[str, Any]]]):
+        return self.bind(tools=[convert_to_openai_tool(t) for t in tools])
 
     # def stream(
     #     self,
