@@ -24,7 +24,7 @@ from langchain_community.adapters.openai import (
 
 # common types
 from typing import (
-    Type, Any, Mapping, Dict, Iterator, List, Optional, cast,
+    Type, Any, Mapping, Dict, Iterator, List, Optional, cast, Sequence,
     AsyncIterator, Union, Literal, AbstractSet, Collection
 )
 
