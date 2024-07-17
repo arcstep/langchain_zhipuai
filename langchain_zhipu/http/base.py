@@ -58,7 +58,7 @@ def get_all_attributes(obj):
     attrs = {}
     for cls in inspect.getmro(obj.__class__):
         attrs.update(vars(cls))
-    attrs.update(vars(obj))  # 实例属性覆盖类属性
+    attrs.update(vars(obj))
     return attrs
 
 def convert_delta_to_message_chunk(
@@ -119,9 +119,6 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
 
         if self.model:
             attributes["model"] = self.model
-
-        if self.streaming:
-            attributes["streaming"] = self.streaming
 
         return attributes
 
@@ -322,66 +319,3 @@ class BaseChatZhipuAI(BaseChatModel, ABC):
     
     def bind_tools(self, tools: Sequence[Union[Dict[str, Any]]]):
         return self.bind(tools=[convert_to_openai_tool(t) for t in tools])
-
-    # def stream(
-    #     self,
-    #     input: LanguageModelInput,
-    #     config: Optional[RunnableConfig] = None,
-    #     *,
-    #     stop: Optional[List[str]] = None,
-    #     **kwargs: Any,
-    # ) -> Iterator[BaseMessageChunk]:
-    #     """
-    #     重定义stream，以便支持流式输出时的token统计。
-    #     """
-    #     config = ensure_config(config)
-    #     messages = self._convert_input(input).to_messages()
-    #     params = self._get_invocation_params(stop=stop, **kwargs)
-    #     options = {"stop": stop, **kwargs}
-    #     callback_manager = CallbackManager.configure(
-    #         config.get("callbacks"),
-    #         self.callbacks,
-    #         self.verbose,
-    #         config.get("tags"),
-    #         self.tags,
-    #         config.get("metadata"),
-    #         self.metadata,
-    #     )
-    #     (run_manager,) = callback_manager.on_chat_model_start(
-    #         dumpd(self),
-    #         [messages],
-    #         invocation_params=params,
-    #         options=options,
-    #         name=config.get("run_name"),
-    #         # run_id=config.pop("run_id", None),
-    #         batch_size=1,
-    #     )
-    #     generation: Optional[ChatGenerationChunk] = None
-    #     llm_output = {}
-    #     try:
-    #         for chunk in self._stream(
-    #             messages, stop=stop, run_manager=run_manager, **kwargs
-    #         ):
-    #             # chunk.message.response_metadata = _gen_info_and_msg_metadata(chunk)
-    #             yield chunk.message
-                
-    #             if generation is None:
-    #                 generation = chunk
-    #             else:
-    #                 generation += chunk
-    #             if hasattr(chunk, 'generation_info') and chunk.generation_info:
-    #                 llm_output.update(chunk.generation_info)
-    #         assert generation is not None
-    #     except BaseException as e:
-    #         run_manager.on_llm_error(
-    #             e,
-    #             response=LLMResult(
-    #                 generations=[[generation]] if generation else []
-    #             ),
-    #         )
-    #         raise e
-    #     else:
-    #         run_manager.on_llm_end(LLMResult(
-    #             generations=[[generation]],
-    #             llm_output=llm_output
-    #         ))
